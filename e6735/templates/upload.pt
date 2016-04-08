@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="${request.static_url('e6735:static/patch.css')}">
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+  <link href="http://vjs.zencdn.net/5.8.8/video-js.css" rel="stylesheet">
+
+  <title>Upload - e6735</title>
+</head>
+<body>
+<div class="container">
+  <div id="query">
+  </div>
+
+  <div class="waiting invisible">
+    <hr />
+    <img src="${request.static_url('e6735:static/sillywalk.gif')}" />
+    <p>Silly querying...</p>
+  </div>
+  <hr />
+  <footer><p>Powered by React.js, Pyramid and many other libraries.</p></footer>
+</div>
+
+<script src="${request.static_url('e6735:static/js/bundled-app.min.js')}"></script>
+</body>
+</html>
