@@ -24,7 +24,12 @@ D_short = librosa.stft(y, hop_length=64)
 
 # Display a spectrogram
 def toFreqBin(audio, framerate, samplerate):
-    freq, D = librosa.ifgram(audio, n_fft=framerate, sr=samplerate)
+    print(np.shape(audio))
+    hopSize = (int)(samplerate / framerate)
+    winSize = hopSize*2
+    print(samplerate)
+    freq, D = librosa.ifgram(audio, n_fft=winSize, sr=samplerate, hop_length=hopSize)
+    print(np.shape(D))
     t = len(freq[0])
     re = np.zeros((t, 6))
     for i in range(len(freq)):
@@ -41,5 +46,6 @@ def toFreqBin(audio, framerate, samplerate):
                 re[j, 4] += np.abs(D[i,j])
             else:
                 re[j, 5] += np.abs(D[i,j])
+
     return re
-print(toFreqBin(y,2048, sr))
+print(toFreqBin(y,1, sr))
