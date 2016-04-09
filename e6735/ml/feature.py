@@ -25,7 +25,7 @@ class matchingModel:
     def audioHess(self,w): #n*n
         return 2*w.T().dot(w)
 
-class trainModel:
+class trainModelLeastError:
     basis = matchingModel()
     features = []
 
@@ -81,7 +81,7 @@ def gmmScores(features, classnum):
 
 
 
-def trainFeatures(sclassifier, features):
+def trainFeaturesLogistic(sclassifier, features):
     X = []
     Y = []
     for i in features:
