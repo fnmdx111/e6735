@@ -43,7 +43,7 @@ def main(global_config, **settings):
     config.add_static_view('videos', up_config.resources['videos'])
     config.add_static_view('audios', up_config.resources['audios'])
 
-    config.add_route('upload', '/')
+    config.add_route('home', '/')
     config.add_route('upload', '/upload')
     config.add_route('query', '/query')
     config.scan()
