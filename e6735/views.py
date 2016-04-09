@@ -12,10 +12,13 @@ from e6735.models import Video, Audio
 def home(request):
     return {}
 
+
 @view_config(route_name='upload', renderer='json')
 def upload_view(request):
     print(request.POST['file'],
-          request.POST['dims'])
+          request.POST['dims'],
+          request.POST['title'],
+          request.POST['artist'])
     return {}
 
 

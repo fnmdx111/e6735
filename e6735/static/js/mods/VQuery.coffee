@@ -16,14 +16,14 @@ query_view = React.createClass
       _div {className: 'page-header'},
         _h2 {}, "What's on your mind?"
       Uploader {
-        url: this.props.url
-        evt_hnds: this.props.evt_hnds
+        url: @props.url
+        evt_hnds: @props.evt_hnds
       }
       _hr {className: 'query-result invisible'}
       _div {id: 'result-row', className: 'query-result invisible'}
 
   componentDidMount: ->
-    this.props.grid.refresh_refs()
+    @props.grid.refresh_refs()
 
 
 module.exports = class VQuery extends AbstractView

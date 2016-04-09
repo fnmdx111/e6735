@@ -12,18 +12,15 @@ AbstractView = require './AbstractView'
   ['span', 'input', 'button', 'img', 'h2', 'hr', 'div', 'p', 'video', 'audio',
    'source', 'h4', 'h5'])
 
-
+SimplePanel = React.createFactory(require './SimplePanel')
 
 preview_video = null
 
 slider = React.createClass
   render: ->
     _div {className: 'col-md-6'},
-      _div {className: 'panel panel-info'},
-        _div {className: "panel-heading"},
-          _h4 {className: "panel-title"}, "#{this.props.caption}"
-        _div {className: "panel-body"},
-          _input {id: this.props.id, type: 'range', className: 'sliderbar'}
+      SimplePanel {title: @props.caption},
+        _input {id: this.props.id, type: 'range', className: 'sliderbar'}
 
 slider = React.createFactory slider
 
@@ -40,6 +37,8 @@ new_view = React.createClass
         ref: 'target'
         className: "embed-responsive embed-responsive-16by9 mm-container"
       }
+      # Because video.js is not very compatible with react.js, we are going to
+      # append <video> later to this div#__id
 
     else if $$s.type?.match /audio/
       audio_properties =
@@ -54,16 +53,12 @@ new_view = React.createClass
       },
         _audio audio_properties,
           _source {src: $$s.fp, type: $$s.type}
+      # Audio tags are native HTML5 elements, work well with react.js
     else
       _div {}
+      # No preview
 
-    preview = _div {id: 'preview'},
-      _div {className: "panel panel-info"},
-        _div {className: "panel-heading"},
-          _h4 {className: "panel-title"},
-            "Preview"
-        _div {className: "panel-body"},
-          pv
+    preview = SimplePanel {id: 'preview', title: "Preview"}, pv
 
     sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
       1: 'Dim1'
@@ -94,11 +89,29 @@ new_view = React.createClass
           preview
         _div {className: "col-md-4"},
           sliders_row
-      _btn {
-        type: "button"
-        className: "btn btn-primary pull-right"
-        id: "submit"
-      }, "Submit"
+      _div {className: "input-group"},
+        _input {
+          type: "text"
+          className: "form-control"
+          placeholder: "Title"
+          id: "title-input"
+          ariaDescribedby: "addon-by"
+        }
+        _span {className: "input-group-addon", id: "addon-by"},
+          "by"
+        _input {
+          type: "text"
+          className: "form-control"
+          placeholder: "Artist"
+          id: "artist-input"
+          ariaDescribedby: "addon-by"
+        }
+        _span {className: "input-group-btn"},
+          _btn {
+            type: "button"
+            className: "btn btn-primary pull-right"
+            id: "submit"
+          }, "Submit"
 
   componentDidMount: ->
 
@@ -149,9 +162,21 @@ module.exports = class VNew extends AbstractView
 
       init: (dz) =>
         $('#submit').on 'click', =>
+          title = $('#title-input').val()
+          artist = $('#artist-input').val()
+
+          if title == ""
+            alert "Title cannot be empty!"
+            return
+          if artist == ""
+            alert "Artist cannot be empty!"
+            return
+
           data = new FormData()
           data.append 'file', dz.files[0]
           data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..10])
+          data.append 'title', title
+          data.append 'artist', artist
 
           $.ajax {
             url: @url
