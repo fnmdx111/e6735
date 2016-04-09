@@ -15,7 +15,7 @@
 </head>
 <body>
 <div class="container">
-  <div id="query">
+  <div id="app-view">
   </div>
 
   <div class="waiting invisible">

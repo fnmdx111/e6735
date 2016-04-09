@@ -1,11 +1,10 @@
-import random
-
 from sqlalchemy import (
     Column,
     Index,
     Integer,
     Text,
     SmallInteger,
+    PickleType
 )
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -32,6 +31,7 @@ class MultimediaMixin:
     title = Column(Text)
     artist = Column(Text)
     length = Column(SmallInteger)
+    canonical_repr = Column(PickleType)
 
     @declared_attr
     def __table_args__(cls):
@@ -48,7 +48,7 @@ class MultimediaMixin:
             'artist': self.artist,
             'length': self.length,
             'filename': self.filename(),
-            'confidence': random.random(),
+            'confidence': self.confidence
         }
 
 
@@ -64,6 +64,7 @@ class Video(MultimediaMixin, Base):
         self.length = length
         self.width = width
         self.height = height
+        self.confidence = 0.0
 
 
 class Audio(MultimediaMixin, Base):
@@ -73,6 +74,7 @@ class Audio(MultimediaMixin, Base):
         self.title = title
         self.artist = artist
         self.length = length
+        self.confidence = 0.0
 
     def from_video(self):
         pass

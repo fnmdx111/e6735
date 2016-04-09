@@ -20,7 +20,7 @@ cls = React.createClass
       controls: true
 
     audio_properties =
-      className: ''
+      className: 'embed-responsive-item'
       controls: true
       preload: "auto"
       id: $$p.audio_id
@@ -39,9 +39,9 @@ cls = React.createClass
           _h5 {}, "confidence: #{$$p.confidence}"
           _div {className: 'embed-responsive embed-responsive-16by9 mm-container'},
             _video video_properties,
-              _source {src: $$p.video_fp, type: $$p.video_type}
-          _audio audio_properties,
-            _source {src: $$p.audio_fp, type: $$p.audio_type}
+              _source {src: $$p.video_fp, type: $$p.video_type},
+            _audio audio_properties,
+              _source {src: $$p.audio_fp, type: $$p.audio_type}
 
   componentDidMount: ->
     $$p = this.props
@@ -121,5 +121,6 @@ module.exports = class ResultGrid extends AbstractView
           window.URL.createObjectURL(uploaded_file), rscp(r.filename),
           shortid.generate(), uploaded_file.type, 'video/mp4', r.confidence
 
+    ReactDOM.unmountComponentAtNode @anchor if @anchor?
     ReactDOM.render React.createElement(grid_cls, {items: items}),
       @anchor
