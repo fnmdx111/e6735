@@ -113,8 +113,6 @@ new_view = React.createClass
             id: "submit"
           }, "Submit"
 
-  componentDidMount: ->
-
   componentDidUpdate: ->
     $$s = @state ? {}
     if $$s.type?.match /video/
@@ -143,8 +141,7 @@ new_view = React.createClass
       preview_video?.reset().hide()
 
       a = document.getElementById('audio-preview')
-      if a?
-        a.load()
+      a?.load()
 
     true
 

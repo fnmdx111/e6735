@@ -21,9 +21,13 @@ module.exports = React.createClass
 
           dz.options.accept = (file, done) ->
             while this.files.length > 1
-              this.removeFile(this.files[0])
+              this.removeFile this.files[0]
+
+            # Invoke the `accept' callback 
             $$p.evt_hnds.accept? file
+
             done()
+
           dz.options.acceptedFiles = 'video/*,audio/*'
 
         addedfile: $$p.evt_hnds.addedfile
