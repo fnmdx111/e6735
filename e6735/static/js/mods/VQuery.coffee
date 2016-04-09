@@ -19,7 +19,7 @@ query_view = React.createClass
         url: this.props.url
         evt_hnds: this.props.evt_hnds
       }
-      _hr {className: 'query-result'}
+      _hr {className: 'query-result invisible'}
       _div {id: 'result-row', className: 'query-result invisible'}
 
   componentDidMount: ->

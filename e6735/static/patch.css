@@ -16,15 +16,17 @@
     pointer-events: none;
 }
 
-.audio-width {
-    width: 640px;
-}
-
 .top-right {
     position: absolute;
     top: 0;
     right: 0;
     margin: 10px;
+}
+
+.my-center {
+    width: 200px;
+    margin: 0 auto;
+    display: block;
 }
 
 input[type=range].sliderbar {
