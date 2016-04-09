@@ -1,10 +1,10 @@
 import numpy as np
-from sklearn import mixture, linear_model
+from sklearn import mixture, linear_model, decomposition
 
 class feature:
     score = np.zeros(10)
-    audio = np.zeros((1000,6))
-    video = np.zeros((1000,6))
+    audio = np.zeros((300,6))
+    video = np.zeros((300,6))
 
 def gmmScores(features, classnum):
     g = mixture.GMM(n_components = classnum)
@@ -23,19 +23,16 @@ def trainFeatures(sclassifier, features):
     l.fit(X,Y)
     return l
 
-X = []
-Y = []
-for i in range(10):
-    X.append([i, 10 -i])
-    Y.append([1])
-for i in range(10):
-    X.append([i, 20 - i])
-    Y.append([2])
-for i in range(-10, 0):
-    X.append([i, -10 -i])
-    Y.append([0])
-l = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
-l.fit(X, Y)
-k= []
-k.append([10,10])
-print(l.predict_proba(k))
+def reduce(features, components):
+    a = 10
+    n = np.size(features)
+    n = (int)(n/len(features))
+    X = np.reshape(features, (len(features), n))
+    pca = decomposition.PCA(n_compnents=compnents)
+    pca.fit(X)
+    return pca
+
+m = np.zeros((2,2,2))
+m[0] = [[1,2],[3,4]]
+m[1] = [[5,6],[7,8]]
+reduce(m)
