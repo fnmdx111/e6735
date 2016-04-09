@@ -119,6 +119,6 @@ module.exports = class ResultGrid extends AbstractView
           window.URL.createObjectURL(uploaded_file), rscp(r.filename),
           shortid.generate(), uploaded_file.type, '', r.confidence
 
-    ReactDOM.unmountComponentAtNode @anchor if @anchor?
+    ReactDOM.unmountComponentAtNode @anchor?
     ReactDOM.render React.createElement(grid_cls, {items: items}),
       @anchor
