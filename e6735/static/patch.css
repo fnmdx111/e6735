@@ -12,11 +12,6 @@
     height: 0!important;
 }
 
-.waiting {
-    width: 50%;
-    margin: 0 auto;
-}
-
 .not-clickable {
     pointer-events: none;
 }

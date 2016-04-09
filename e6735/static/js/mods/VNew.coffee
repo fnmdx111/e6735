@@ -12,27 +12,13 @@ AbstractView = require './AbstractView'
   ['span', 'input', 'button', 'img', 'h2', 'hr', 'div', 'p', 'video', 'audio',
    'source', 'h4', 'h5'])
 
-video_properties =
-  className: 'video-js vjs-default-skin embed-responsive-item'
-  preload: "auto"
-  controls: true
-  width: "640"
-  height: "322"
-  id: "video-el"
-  key: "video-el"
 
-audio_properties =
-  className: 'embed-responsive-item'
-  controls: true
-  preload: 'auto'
-  id: 'audio-preview'
 
 preview_video = null
-preview_audio = null
 
 slider = React.createClass
   render: ->
-    _div {className: 'col-md-4'},
+    _div {className: 'col-md-6'},
       _div {className: 'panel panel-info'},
         _div {className: "panel-heading"},
           _h4 {className: "panel-title"}, "#{this.props.caption}"
@@ -44,6 +30,40 @@ slider = React.createFactory slider
 new_view = React.createClass
   render: ->
     $$p = this.props
+    $$s = this.state ? {}
+
+    __id = 'preview-widget'
+
+    pv = if $$s.type?.match /video/
+      _div {
+        id: __id
+        ref: 'target'
+        className: "embed-responsive embed-responsive-16by9 mm-container"
+      }
+
+    else if $$s.type?.match /audio/
+      audio_properties =
+        className: 'embed-responsive-item'
+        controls: true
+        preload: 'auto'
+        id: 'audio-preview'
+
+      _div {
+        id: __id
+        className: "embed-responsive embed-responsive-16by9 mm-container"
+      },
+        _audio audio_properties,
+          _source {src: $$s.fp, type: $$s.type}
+    else
+      _div {}
+
+    preview = _div {id: 'preview'},
+      _div {className: "panel panel-info"},
+        _div {className: "panel-heading"},
+          _h4 {className: "panel-title"},
+            "Preview"
+        _div {className: "panel-body"},
+          pv
 
     sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
       1: 'Dim1'
@@ -57,6 +77,8 @@ new_view = React.createClass
       9: 'Dim9'
       10: 'Dim10'
     })
+    sliders_row = _div {className: "row"},
+      sliders
 
     _div {},
       _div {className: 'page-header'},
@@ -67,26 +89,51 @@ new_view = React.createClass
         auto_upload: false
       }
       _hr {className: 'vnew'}
-      _div {
-        id: 'video-preview'
-        className: "embed-responsive embed-responsive-16by9 mm-container"
-      },
-        _video video_properties
-      _audio audio_properties
-      _hr {}
       _div {className: "row"},
-        sliders,
-        _btn {type: "button", className: "btn btn-primary", id: "submit"},
-          "Submit"
+        _div {className: "col-md-8"},
+          preview
+        _div {className: "col-md-4"},
+          sliders_row
+      _btn {
+        type: "button"
+        className: "btn btn-primary pull-right"
+        id: "submit"
+      }, "Submit"
 
   componentDidMount: ->
-    $$p = this.props
 
-    $('#video-preview').hide()
-    $('#audio-preview').hide()
+  componentDidUpdate: ->
+    $$s = @state ? {}
+    if $$s.type?.match /video/
+      if not preview_video?
+        wrapper = document.createElement 'div'
+        wrapper.innerHTML = """<video
+  id='video-preview'
+  class='video-js vjs-default-skin embed-responsive-item'
+  preload='auto' controls height='322' width='640'>
+    <source src='#{$$s.fp}' type='#{$$s.type}' />
+</video>"""
 
-    preview_audio = document.getElementById 'audio-preview'
-    preview_video = videojs 'video-el'
+        v = wrapper.firstChild
+        @refs.target.appendChild(v)
+        videojs v, {}, ->
+          preview_video = this
+      else
+        preview_video.src({
+          src: $$s.fp
+          type: $$s.type
+        })
+        preview_video.load()
+        preview_video.show()
+
+    else if $$s.type?.match /audio/
+      preview_video?.reset().hide()
+
+      a = document.getElementById('audio-preview')
+      if a?
+        a.load()
+
+    true
 
 
 module.exports = class VNew extends AbstractView
@@ -94,22 +141,11 @@ module.exports = class VNew extends AbstractView
     super '#' + anchor_id, anchor_id
 
     @evt_hnds = {
-      addedfile: (file) ->
-        $('#video-preview').show()
-
-        if file.type.match /video/
-          preview_video.src {
-            src: window.URL.createObjectURL file
-            type: file.type
-          }
-          preview_video.load()
-
-        else
-          $('#audio-preview').attr 'src', window.URL.createObjectURL(file)
-          $('#audio-preview').attr 'type', file.type
-          preview_audio.load()
-
-          $(preview_audio).show()
+      addedfile: (file) =>
+        @ra_el.setState {
+          type: file.type
+          fp: window.URL.createObjectURL file
+        }
 
       init: (dz) =>
         $('#submit').on 'click', =>
@@ -133,7 +169,7 @@ module.exports = class VNew extends AbstractView
   render: ->
     super()
 
-    ReactDOM.render React.createElement(new_view, {
+    @ra_el = ReactDOM.render React.createElement(new_view, {
       url: @url
       evt_hnds: @evt_hnds
     }), @anchor
