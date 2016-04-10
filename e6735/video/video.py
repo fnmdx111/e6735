@@ -11,28 +11,37 @@ def generateHSVHist(frame, binX, binY, binZ):
     hist = cv2.calcHist([hsvImg],[0,1,2],None,[binX,binY,binZ],[0,180, 0, 255, 0, 255])
     return hist.flatten()
 
-def generateFeature(filename, segmentNum, HistType, binX, binY, binZ):
+def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, binY, binZ, HistType = 1):
     vidcap = cv2.VideoCapture(filename)
-    if not vidcap.isOpened():
+    if not vidcap.isOpened(): 
         print ("could not open")
         return
 
     histSum = np.array([]).reshape(0, binX * binY * binZ)
-    length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+
+    fps = vidcap.get(cv2.CAP_PROP_FPS)
+    length = int(time_length * fps)
+    if length > vidcap.get(cv2.CAP_PROP_FRAME_COUNT):
+        length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    if length < segmentNum:
+        print ("Error! The number of frames is less than segment Number.")
+        return
     segment_length = length / segmentNum
+    if segment_length < framePerSegment:
+        framePerSegment = int(segment_length)
+    spacing = segment_length / framePerSegment
+        
     num = 1
 
     hist = np.zeros((1, binX * binY * binZ))
-    start = 0
-    success,image = vidcap.read()
     count = 0
+    success,image = vidcap.read()
     
-    while (success) :
-        if (segment_length * num < count) :
-            hist = hist / (count - start)
+    while (success and int(length) > int(count * spacing)) :
+        if (segment_length * num <= count * spacing) :
+            hist = hist / framePerSegment
             histSum = np.vstack((histSum, hist))
 
-            start = count
             num = num + 1
 
             if HistType == 0 :
@@ -49,10 +58,15 @@ def generateFeature(filename, segmentNum, HistType, binX, binY, binZ):
                     tmp = generateHSVHist(image, binX, binY, binZ)
             tmp = tmp / np.sum(tmp)
             hist = hist + tmp
-            
-        success,image = vidcap.read()
         count = count + 1
-    hist = hist / (count - start)
+        start = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
+        while (start < int(count * spacing)) :
+            image = vidcap.read()
+            start = start + 1
+        # print (str(start) + "," + str(segment_length * num) + "," + str(length))
+        success,image = vidcap.read()
+        
+    hist = hist / framePerSegment
     histSum = np.vstack((histSum, hist))
     return histSum
 
@@ -79,7 +93,7 @@ def generateSample(k, binX, binY, binZ):
     s = s / ss
     return s
 
-def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
+def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64, binX =18, binY =3, binZ =3, beta = 50):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
         print ("could not open")
@@ -89,19 +103,29 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
     sample = generateSample(k, binX, binY, binZ)
 
     histSum = np.array([]).reshape(0,k)
-    length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    # length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    
+    fps = vidcap.get(cv2.CAP_PROP_FPS)
+    length = int(time_length * fps)
+    if length > vidcap.get(cv2.CAP_PROP_FRAME_COUNT):
+        length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    if length < segmentNum:
+        print ("Error! The number of frames is less than segment Number.")
+        return
     segment_length = length / segmentNum
+    if segment_length < framePerSegment:
+        framePerSegment = int(segment_length)
+    spacing = segment_length / framePerSegment
     num = 1
 
     hist = np.zeros((1, binX * binY * binZ))
-    start = 0
-    success,image = vidcap.read()
     count = 0
+    success,image = vidcap.read()
     dsum = []
     
-    while (success) :
-        if (segment_length * num < count) :
-            hist = hist / (count - start)
+    while (success and int(length) > int(count * spacing)) :
+        if (segment_length * num <= count * spacing) :
+            hist = hist / framePerSegment
             feature = np.zeros((1, k))
             for i in range(k) :
                 diff = hist - sample[:,i]
@@ -111,7 +135,6 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
             feature = feature / np.sum(feature)
             histSum = np.vstack((histSum, feature))
 
-            start = count
             num = num + 1
 
             hist = generateHSVHist(image, binX, binY, binZ)
@@ -120,11 +143,14 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
             tmp = generateHSVHist(image, binX, binY, binZ)
             tmp = tmp / np.sum(tmp)
             hist = hist + tmp
-
-        success,image = vidcap.read()
         count = count + 1
-    hist = hist / (count - start)
-    
+        start = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
+        while (start < int(count * spacing)) :
+            image = vidcap.read()
+            start = start + 1
+        success,image = vidcap.read()
+        
+    hist = hist / framePerSegment    
     feature = np.zeros((1, k))
     for i in range(k) :
         diff = hist - sample[:,i]
@@ -134,4 +160,3 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
     feature = feature / np.sum(feature)
     histSum = np.vstack((histSum, feature))
     return histSum
-
