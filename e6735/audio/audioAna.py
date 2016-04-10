@@ -1,8 +1,6 @@
 import librosa
 import numpy as np
-print("aa")
-y, sr = librosa.load("/home/voodooinnng/1.mp3")
-print(y)
+
 
 # array([[  2.576e-03 -0.000e+00j,   4.327e-02 -0.000e+00j, ...,
 # 3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
@@ -16,11 +14,6 @@ print(y)
 
 # Use left-aligned frames, instead of centered frames
 
-D_left = librosa.stft(y, center=False)
-
-# Use a shorter hop length
-
-D_short = librosa.stft(y, hop_length=64)
 
 # Display a spectrogram
 def toFreqBin(audio, framerate, samplerate):
@@ -48,4 +41,9 @@ def toFreqBin(audio, framerate, samplerate):
                 re[j, 5] += np.abs(D[i,j])
 
     return re
-print(toFreqBin(y,1, sr))
+
+
+def loadAudio(path):
+    return librosa.load(path)
+
+
