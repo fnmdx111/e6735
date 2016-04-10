@@ -86,8 +86,9 @@ class trainModelLeastError:
 
 def gmmScores(features, classnum):
     g = mixture.GMM(n_components = classnum)
+    scores = []
     for i in range(len(features)):
-        scores[i] = features[i].score
+        scores.append(features[i].score)
     return g.fit(scores)
 
 
