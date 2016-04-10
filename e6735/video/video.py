@@ -18,7 +18,7 @@ def generateFeature(filename, segmentNum, HistType, binX, binY, binZ):
         return
 
     histSum = np.array([]).reshape(0, binX * binY * binZ)
-    length = vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+    length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     segment_length = length / segmentNum
     num = 1
 
@@ -79,7 +79,7 @@ def generateSample(k, binX, binY, binZ):
     s = s / ss
     return s
 
-def generateFeature2(filename, segmentNum, binX, binY, binZ, k, beta):
+def generateFeature2(filename, segmentNum, binX, binY, binZ, k = 64, beta = 40):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
         print ("could not open")
@@ -89,7 +89,7 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k, beta):
     sample = generateSample(k, binX, binY, binZ)
 
     histSum = np.array([]).reshape(0,k)
-    length = vidcap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+    length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     segment_length = length / segmentNum
     num = 1
 
@@ -133,8 +133,5 @@ def generateFeature2(filename, segmentNum, binX, binY, binZ, k, beta):
         feature[0,i] = math.exp(- beta * distance);
     feature = feature / np.sum(feature)
     histSum = np.vstack((histSum, feature))
-    
-    print max(dsum)
-    print min(dsum)
     return histSum
 
