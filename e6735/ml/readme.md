@@ -6,3 +6,5 @@ Two training method:
     remaining worK:
         trainModelLeastError: automatic generate score basing on the trained data set: PCA -> minimize video&audio error -> map score to feature space
                               automatic generate score criteria: PCA -> minimize video&audio error -> generate score criteria
+implemented api:
+    clusterLinearModel
