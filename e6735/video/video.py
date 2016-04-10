@@ -13,7 +13,7 @@ def generateHSVHist(frame, binX, binY, binZ):
 
 def generateFeature(filename, segmentNum, HistType, binX, binY, binZ):
     vidcap = cv2.VideoCapture(filename)
-    if not vidcap.isOpened(): 
+    if not vidcap.isOpened():
         print ("could not open")
         return
 
