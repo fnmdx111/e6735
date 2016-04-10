@@ -14,7 +14,7 @@ def generateHSVHist(frame, binX, binY, binZ):
 def generateFeature(filename, segmentNum, HistType, binX, binY, binZ):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
-        print "could not open :",fn
+        print ("could not open")
         return
 
     histSum = np.array([]).reshape(0, binX * binY * binZ)
@@ -82,7 +82,7 @@ def generateSample(k, binX, binY, binZ):
 def generateFeature2(filename, segmentNum, binX, binY, binZ, k, beta):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
-        print "could not open :",fn
+        print ("could not open")
         return
     
     A = generateAMatrix(binX, binY, binZ)
