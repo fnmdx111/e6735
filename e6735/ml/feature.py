@@ -1,5 +1,5 @@
 import numpy as np
-#from e6735.video import video as vi
+from e6735.video import video as vi
 from e6735.audio import audioAna as au
 from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
@@ -40,48 +40,48 @@ class trainModelLeastError:
     features = []
 
     def basisError(self,inputBasis):
-        basis.audioBasis = np.matrix(inputBasis[0])
-        basis.videoBasis = np.matrix(inputBasis[1])
+        self.basis.audioBasis = np.matrix(inputBasis[0])
+        self.basis.videoBasis = np.matrix(inputBasis[1])
         error = 0
-        for i in features:
+        for i in self.features:
             w = np.matrix(i.score)
-            error += basis.audioSquaredError(w, audio)
-            error += basis.videoSquaredError(w, video)
+            error += self.basis.audioSquaredError(w, i.audio)
+            error += self.basis.videoSquaredError(w, i.video)
         return error
 
     def basisJac(self,inputBasis):
-        basis.audioBasis = np.matrix(inputBasis[0])
-        basis.videoBasis = np.matrix(inputBasis[1])
+        self.basis.audioBasis = np.matrix(inputBasis[0])
+        self.basis.videoBasis = np.matrix(inputBasis[1])
         jac = None
-        for i in features:
+        for i in self.features:
             w = np.matrix(i.score)
             if(jac == None):
-                jac = basis.audioJac(w,audio)
+                jac = self.basis.audioJac(w,i.audio)
                 #TODO video Jac
             else:
-                jac += basis.audioJac(w,audio)
+                jac += self.basis.audioJac(w,i.audio)
                 #TODO video Jac
         return jac
 
     def basisHess(self,inputBasis):
-        basis.audioBasis = np.matrix(inputBasis[0])
-        basis.videoBasis = np.matrix(inputBasis[1])
+        self.basis.audioBasis = np.matrix(inputBasis[0])
+        self.basis.videoBasis = np.matrix(inputBasis[1])
         hess = None
-        for i in features:
+        for i in self.features:
             w = np.matrix(i.score)
             if(hess == None):
-                hess = basis.audioHess(w)
+                hess = self.basis.audioHess(w)
                 #TODO video Hess
             else:
-                hess += basis.audioHess(w)
+                hess += self.basis.audioHess(w)
                 # TODO video Hess
         return hess
 
     def train(self, initBasis, maxiter):
         res = optimize.minimize(self.basisError, initBasis, method="Newton-CG",
                           jac=self.basisJac, hess=self.basisHess, options={'maxiter':maxiter,'disp': True})
-        basis.audioBasis = res[0]
-        basis.videoBasis = res[1]
+        self.basis.audioBasis = res[0]
+        self.basis.videoBasis = res[1]
 
 
 def gmmScores(features, classnum):
@@ -111,7 +111,7 @@ def reduce(features, components):
     n = np.size(features)
     n = (int)(n/len(features))
     X = np.reshape(features, (len(features), n))
-    pca = decomposition.PCA(n_compnents=compnents)
+    pca = decomposition.PCA(n_compnents=components)
     pca.fit(X)
     return pca
 
@@ -139,13 +139,14 @@ class clusterLinearModel:
             res = res[0:self.length]
             self.features[i].audio = np.reshape(res, (np.size(res)))
             self.features[i].score = scores[i]
-         #   self.features[i].video = vi.generateFeature(i,length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
+            res = vi.generateFeature(i,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
+            self.features[i].video = np.reshape(res, (np.size(res)))
         print("classifying")
         classifier = gmmScores(self.features,2)
         self.la, self.lv = trainFeaturesLogistic(classifier,self.features)
         for i in self.features:
             self.audioIScore.append(self.la.predict_proba(i.audio))
-        #    self.videoIScore.append(self.la.predict_proba(i.video))
+            self.videoIScore.append(self.la.predict_proba(i.video))
 
     def scoreAudio(self, audiofile):
         audio, sr = au.loadAudio(audiofile)
@@ -160,14 +161,13 @@ class clusterLinearModel:
         sorted(auDis, key=lambda ascore:ascore[1])
         return auDis
 
-    def scoreVideo(self, audiofile):
-        audio, sr = au.loadAudio(audiofile)
-        videoFeature = vi.generateFeature(i,length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
+    def scoreVideo(self, videoFile):
+        videoFeature = vi.generateFeature(videoFile,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
         gmm = self.la.predict_proba(videoFeature)
         #TODO query with database
         viDis = []
-        for i in range(len(features)):
-            viDis.append((self.videofiles[i], np.linalg.norm(videoIScore[i] - gmm)))
+        for i in range(len(self.features)):
+            viDis.append((self.videofiles[i], np.linalg.norm(self.videoIScore[i] - gmm)))
         sorted(viDis, key=lambda ascore:ascore[1])
         return viDis
 ## scores psychedelic
