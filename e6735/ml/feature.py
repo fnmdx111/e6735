@@ -29,7 +29,7 @@ class matchingModel:
         return dif[0,0]
 
     def audioJac(self,w, audio): # n*n return
-        return 2*w.T().dot(np.matrix(audio) - w.dot(audioBasis))
+        return 2*w.T().dot(np.matrix(audio) - w.dot(self.audioBasis))
 
     def audioHess(self,w): #n*n
         return 2*w.T().dot(w)
@@ -181,11 +181,11 @@ class clusterLinearModel:
 # romantic
 # violent
 #          (.6,.0,.7,.3,.5,.6,.6,.0,.6)
-audioFiles = ["/home/voodooinnng/l.mp3", "/home/voodooinnng/z.mp3", "/home/voodooinnng/1.mp3"]
-videoFiles = []
-scores = [(.2,.2,.3,.7,.2,.2,.2,.9,.0),
-          (.7,.0,.8,.1,.3,.0,.6,.5,.2)]
-
-cl = clusterLinearModel()
-cl.trainWithLogistic(audioFiles,videoFiles,scores)
-print(cl.scoreAudio("/home/voodooinnng/1.mp3"))
+# audioFiles = ["/home/voodooinnng/l.mp3", "/home/voodooinnng/z.mp3", "/home/voodooinnng/1.mp3"]
+# videoFiles = []
+# scores = [(.2,.2,.3,.7,.2,.2,.2,.9,.0),
+#           (.7,.0,.8,.1,.3,.0,.6,.5,.2)]
+#
+# cl = clusterLinearModel()
+# cl.trainWithLogistic(audioFiles,videoFiles,scores)
+# print(cl.scoreAudio("/home/voodooinnng/1.mp3"))
