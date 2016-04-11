@@ -5,15 +5,18 @@ from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
 
 
-class feature:
-    score = np.zeros(10)
-    audio = np.zeros((300*6))
-    video = np.zeros((300*6))
+class Feature:
+    def __init__(self):
+        self.score = np.zeros(10)
+        self.audio = np.zeros((300*6))
+        self.video = np.zeros((300*6))
 
 
-class matchingModel:
-    audioBasis = None
-    videoBasis = None
+class MatchingModel:
+
+    def __init__(self):
+        self.audioBasis = None
+        self.videoBasis = None
 
     def evaluateAudio(self, w): #w is a matrix
         return w.dot(self.audioBasis)
@@ -35,9 +38,10 @@ class matchingModel:
         return 2*w.T().dot(w)
 
 
-class trainModelLeastError:
-    basis = matchingModel()
-    features = []
+class TrainModelLeastError:
+    def __init__(self):
+        self.basis = matchingModel()
+        self.features = []
 
     def basisError(self,inputBasis):
         self.basis.audioBasis = np.matrix(inputBasis[0])
@@ -116,17 +120,18 @@ def reduce(features, components):
     pca.fit(X)
     return pca
 
-class clusterLinearModel:
-    la = None
-    lv = None
-    features = []
-    framerate = 30
-    length = 1000
-    videoBin = 24
-    audioIScore = []
-    videoIScore = []
-    audiofiles = []
-    videofiles = []
+class ClusterLinearModel:
+    def __init__(self):
+        self.la = None
+        self.lv = None
+        self.features = []
+        self.framerate = 30
+        self.length = 1000
+        self.videoBin = 24
+        self.audioIScore = []
+        self.videoIScore = []
+        self.audiofiles = []
+        self.videofiles = []
 
     def trainWithLogistic(self, audiofiles, videofiles,scores):
         self.audiofiles = audiofiles
