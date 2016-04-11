@@ -1,6 +1,7 @@
 import numpy as np
 from e6735.video import video as vi
 from e6735.audio import audioAna as au
+import math
 from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
 import pickle
@@ -105,9 +106,10 @@ def reduce(features, components):
     return pca
 
 class clusterLinearModel:
-    framerate = 30
+    framerate = 10
     length = 1000
-    videoBin = 24
+    videoBin = 2
+    frameperseg = 1
 
     def __init__(self):
         self.la = None
@@ -142,7 +144,8 @@ class clusterLinearModel:
             res = res[0:self.length]
             auFeature.append(np.reshape(res, (np.size(res))))
         for i in range(len(videofiles)):
-            res = vi.generateFeature(i,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
+            res = vi.generateFeature(i,math.ceil(self.length/self.framerate),self.length,
+                                     self.frameperseg,self.videoBin, self.videoBin, self.videoBin)
             viFeature.append(np.reshape(res, (np.size(res))))
         print("classifying")
         scores = []
