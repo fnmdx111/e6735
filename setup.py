@@ -17,6 +17,8 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     'waitress',
+    'librosa',
+    'sklearn'
     ]
 
 setup(name='e6735',

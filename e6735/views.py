@@ -1,4 +1,6 @@
+import random
 import shutil
+from operator import attrgetter
 from tempfile import NamedTemporaryFile
 
 import time
@@ -6,18 +8,35 @@ from pyramid.view import view_config
 from e6735.models import Video, Audio
 
 
-@view_config(route_name='upload', renderer='templates/upload.pt')
-def upload_view(request):
+@view_config(route_name='home', renderer='templates/upload.pt')
+def home(request):
     return {}
+
+
+@view_config(route_name='upload', renderer='json')
+def upload_view(request):
+    print(request.POST['file'],
+          request.POST['dims'],
+          request.POST['title'],
+          request.POST['artist'])
+    return {}
+
 
 def query_similar_multimedia_files(db, filename, ext, is_video):
     time.sleep(1)
     filename += ext
 
+    def append_confidence(mm):
+        mm.confidence = random.random()
+        return mm
+
     if is_video:
-        return db.query(Audio).all()
+        ret = map(append_confidence, db.query(Audio).all())
     else:
-        return db.query(Video).all()
+        ret = map(append_confidence, db.query(Video).all())
+
+    return sorted(ret, key=attrgetter('confidence'), reverse=True)
+
 
 @view_config(route_name='query', renderer='json')
 def receive_query_subject(request):
