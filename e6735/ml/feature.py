@@ -90,10 +90,9 @@ def gmmScores(scores, classnum):
 
 
 def trainFeaturesLogistic(sclassifier, auFeature, auscores):
-
-    ac = []
-    for i in auscores:
-        ac.append(sclassifier.predict(i))
+    ac = np.zeros(len(auFeature))
+    for i in range(len(auscores)):
+        ac[i:i + 1] = sclassifier.predict(np.array(auscores[i]).reshape((1, -1)))
 
     l = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
     l.fit(auFeature,ac)
@@ -110,7 +109,7 @@ def reduce(features, components):
 
 class clusterLinearModel:
     framerate = 10
-    length = 1000
+    length = 500
     videoBin = 2
     frameperseg = 1
     MIN_N_FILE_THRESHOLD = 2
@@ -166,6 +165,9 @@ class clusterLinearModel:
                                      self.videoBin)
             viFeature.append(np.reshape(res, (np.size(res))))
         print("classifying")
+
+        auFeature = np.array(auFeature)
+        viFeature = np.array(viFeature)
 
         scores = []
         scores.extend(auscores)
