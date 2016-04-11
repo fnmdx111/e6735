@@ -138,7 +138,7 @@ class clusterLinearModel:
         for i in auFeature:
             audioIScore.append(self.la.predict_proba(i))
         for i in viFeature:
-            videoIScore.append(self.la.predict_proba(i))
+            videoIScore.append(self.lv.predict_proba(i))
         return audioIScore, videoIScore
 
     def scoreAudio(self, audiofile):
