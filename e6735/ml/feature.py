@@ -110,6 +110,7 @@ class clusterLinearModel:
     length = 1000
     videoBin = 2
     frameperseg = 1
+    MIN_N_FILE_THRESHOLD = 2
 
     def __init__(self):
         self.la = None
@@ -118,13 +119,16 @@ class clusterLinearModel:
 
         self.n_files = 0
 
-        self.n_cluster = 2 #must smaller than dataset
+        self.n_cluster = min(20, max(self.MIN_N_FILE_THRESHOLD,
+                                     self.n_files / 2))
+        # must smaller than dataset
 
     @staticmethod
     def from_pickle(pickle_fp):
-        with open(pickle_fp, 'wb') as f:
+        with open(pickle_fp, 'rb') as f:
             r = clusterLinearModel()
-            r.la, r.lv = pickle.load(f)
+            ret = pickle.load(f)
+            r.la, r.lv = ret
 
             return r
 
@@ -134,23 +138,35 @@ class clusterLinearModel:
 
     def trainWithLogistic(self, audiofiles, videofiles, auscores, viscores):
         self.n_files = len(audiofiles) + len(videofiles)
+        if self.n_files < self.MIN_N_FILE_THRESHOLD:
+            return [None] * len(audiofiles), [None] * len(videofiles)
+
+        auscores = list(auscores)
+        viscores = list(viscores)
 
         print("loading")
         auFeature = []
         viFeature = []
-        for i in range(len(audiofiles)):
-            a, sr = au.loadAudio(audiofiles[i])
+        for afp in audiofiles:
+            a, sr = au.loadAudio(afp)
             res = au.toFreqBin(a,self.framerate,sr)
             res = res[0:self.length]
             auFeature.append(np.reshape(res, (np.size(res))))
-        for i in range(len(videofiles)):
-            res = vi.generateFeature(i,math.ceil(self.length/self.framerate),self.length,
-                                     self.frameperseg,self.videoBin, self.videoBin, self.videoBin)
+
+        for vfp in videofiles:
+            res = vi.generateFeature(vfp,
+                                     math.ceil(self.length/self.framerate),
+                                     self.length,
+                                     self.frameperseg,
+                                     self.videoBin,
+                                     self.videoBin,
+                                     self.videoBin)
             viFeature.append(np.reshape(res, (np.size(res))))
         print("classifying")
+
         scores = []
-        scores.append(auscores)
-        scores.append(viscores)
+        scores.extend(auscores)
+        scores.extend(viscores)
         classifier = gmmScores(scores,self.n_cluster)
         self.la, self.lv = trainFeaturesLogistic(classifier,auFeature, viFeature,auscores,viscores)
         audioIScore = []
@@ -159,6 +175,7 @@ class clusterLinearModel:
             audioIScore.append(self.la.predict_proba(i))
         for i in viFeature:
             videoIScore.append(self.lv.predict_proba(i))
+
         return audioIScore, videoIScore
 
     def scoreAudio(self, audiofile):
