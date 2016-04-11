@@ -1,1 +1,3 @@
-from .feature import ClusterLinearModel
+from .feature import clusterLinearModel
+
+ClusterLinearModel = clusterLinearModel

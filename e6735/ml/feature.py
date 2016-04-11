@@ -3,7 +3,7 @@ from e6735.video import video as vi
 from e6735.audio import audioAna as au
 from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
-
+import pickle
 
 
 
@@ -105,17 +105,34 @@ def reduce(features, components):
     return pca
 
 class clusterLinearModel:
-    def __init(self):
+    framerate = 30
+    length = 1000
+    videoBin = 24
+
+    def __init__(self):
         self.la = None
         self.lv = None
         self.features = []
-        self.framerate = 30
-        self.length = 1000
-        self.videoBin = 24
+
+        self.n_files = 0
 
         self.n_cluster = 2 #must smaller than dataset
 
+    @staticmethod
+    def from_pickle(pickle_fp):
+        with open(pickle_fp, 'wb') as f:
+            r = clusterLinearModel()
+            r.la, r.lv = pickle.load(f)
+
+            return r
+
+    def dump(self, pickle_fp):
+        with open(pickle_fp, 'wb') as f:
+            pickle.dump([self.la, self.lv], f)
+
     def trainWithLogistic(self, audiofiles, videofiles, auscores, viscores):
+        self.n_files = len(audiofiles) + len(videofiles)
+
         print("loading")
         auFeature = []
         viFeature = []
