@@ -89,12 +89,15 @@ def gmmScores(scores, classnum):
     return g.fit(scores)
 
 
-def trainFeaturesLogistic(sclassifier, auFeature, viFeature, auscores, viscores):
+def trainFeaturesLogistic(sclassifier, auFeature, auscores):
+
+    ac = []
+    for i in auscores:
+        ac.append(sclassifier.predict(i))
+
     l = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
-    l.fit(auFeature,auscores)
-    lv = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
-    lv.fit(viFeature,viscores)
-    return l, lv
+    l.fit(auFeature,ac)
+    return l
 
 
 def reduce(features, components):
@@ -168,17 +171,24 @@ class clusterLinearModel:
         scores.extend(auscores)
         scores.extend(viscores)
         classifier = gmmScores(scores,self.n_cluster)
-        self.la, self.lv = trainFeaturesLogistic(classifier,auFeature, viFeature,auscores,viscores)
+        if len(audiofiles) >= self.MIN_N_FILE_THRESHOLD:
+            self.la = trainFeaturesLogistic(classifier,auFeature, auscores)
+        if len(videofiles) >= self.MIN_N_FILE_THRESHOLD:
+            self.lv = trainFeaturesLogistic(classifier,viFeature, viscores)
         audioIScore = []
         videoIScore = []
-        for i in auFeature:
-            audioIScore.append(self.la.predict_proba(i))
-        for i in viFeature:
-            videoIScore.append(self.lv.predict_proba(i))
+        if self.la is not None:
+            for i in auFeature:
+                audioIScore.append(self.la.predict_proba(i))
+        if self.lv is not None:
+            for i in viFeature:
+                videoIScore.append(self.lv.predict_proba(i))
 
         return audioIScore, videoIScore
 
     def scoreAudio(self, audiofile):
+        if(self.la != None):
+            return []
         audio, sr = au.loadAudio(audiofile)
         audioFeature = au.toFreqBin(audio,self.framerate, sr)
         audioFeature = audioFeature[0:self.length]
@@ -187,7 +197,10 @@ class clusterLinearModel:
         return gmm
 
     def scoreVideo(self, videoFile):
+        if(self.lv != None):
+            return []
         videoFeature = vi.generateFeature(videoFile,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
+        videoFeature = np.reshape(videoFeature, (np.size(videoFeature)))
         gmm = self.la.predict_proba(videoFeature)
         return gmm
 ## scores psychedelic
