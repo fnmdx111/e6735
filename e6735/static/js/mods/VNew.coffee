@@ -61,16 +61,16 @@ new_view = React.createClass
     preview = SimplePanel {id: 'preview', title: "Preview"}, pv
 
     sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
-      1: 'Dim1'
-      2: 'Dim2'
-      3: 'Dim3'
-      4: 'Dim4'
-      5: 'Dim5'
-      6: 'Dim6'
-      7: 'Dim7'
-      8: 'Dim8'
-      9: 'Dim9'
-      10: 'Dim10'
+      1: 'Psychedelic'
+      2: 'Vibrant'
+      3: 'Neutral'
+      4: 'Happy'
+      5: 'Lovely'
+      6: 'Serene'
+      7: 'Gloomy'
+      8: 'Energetic'
+      9: 'Romantic'
+      10: 'Violent'
     })
     sliders_row = _div {className: "row"},
       sliders

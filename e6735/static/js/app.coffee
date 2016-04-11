@@ -56,6 +56,8 @@ app_view = React.createClass
       uv_btn.show()
       qv_btn.hide()
 
+    @setState {url: '/htg-query'}
+
 app_el = React.createElement app_view, {
   query_view: new VQuery
   upload_view: new VNew

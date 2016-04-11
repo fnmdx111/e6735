@@ -45,6 +45,7 @@ def main(global_config, **settings):
 
     config.add_route('home', '/')
     config.add_route('upload', '/upload')
-    config.add_route('query', '/query')
+    config.add_route('htg-query', '/htg-query')
+    config.add_route('hmg-query', '/hmg-query')
     config.scan()
     return config.make_wsgi_app()

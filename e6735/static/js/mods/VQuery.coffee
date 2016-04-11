@@ -7,27 +7,49 @@ Uploader = React.createFactory(require('./Uploader'))
 AbstractView = require './AbstractView'
 ResultGrid = require './ResultGrid'
 
-[_img, _h2, _hr, _div, _p, _video] = (React.createFactory(name) for name in\
-  ['img', 'h2', 'hr', 'div', 'p', 'video'])
+[_label, _input, _span, _btn, _img, _h2, _hr, _div, _p, _video] =\
+  (React.createFactory(name) for name in\
+  ['label', 'input', 'span', 'button', 'img', 'h2', 'hr', 'div', 'p', 'video'])
 
 query_view = React.createClass
   render: ->
     _div {},
       _div {className: 'page-header'},
         _h2 {}, "What's on your mind?"
+#        _div {className: "btn-group", 'data-toggle': "buttons", id: "qtype"},
+#        _label {className: "btn btn-default active"},
+#          _input {
+#            type: "radio"
+#            name: "qtype"
+#            checked: true
+#            value: "htg"
+#            onChange: @props.on_htg_change
+#          }
+#          "Search heterogeneously."
+#        _label {className: "btn btn-default"},
+#          _input {
+#            type: "radio"
+#            name: "qtype"
+#            checked: true
+#            value: "hmg"
+#            onChange: @props.on_hmg_change
+#          }
+#          "Search homogeneously."
       Uploader {
         url: @props.url
         evt_hnds: @props.evt_hnds
+        ref: 'uploader'
       }
       _hr {className: 'query-result invisible'}
       _div {id: 'result-row', className: 'query-result invisible'}
 
   componentDidMount: ->
-    @props.grid.refresh_refs()
+    $$p = @props
+    $$p.grid.refresh_refs()
 
 
 module.exports = class VQuery extends AbstractView
-  constructor: (@url='/query', anchor_id='query') ->
+  constructor: (@url='/htg-query', anchor_id='query') ->
     super '#' + anchor_id, anchor_id
     @refresh_refs()
 
@@ -55,4 +77,5 @@ module.exports = class VQuery extends AbstractView
       url: @url
       evt_hnds: @evt_hnds
       grid: @grid
+      parent: this
     }), @anchor
