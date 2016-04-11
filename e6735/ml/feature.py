@@ -1,3 +1,5 @@
+
+from multiprocessing import Pool
 import numpy as np
 from e6735.video import video as vi
 from e6735.audio import audioAna as au
@@ -91,8 +93,13 @@ def gmmScores(scores, classnum):
 
 def trainFeaturesLogistic(sclassifier, auFeature, auscores):
     ac = np.zeros(len(auFeature))
+    s_ac = set()
     for i in range(len(auscores)):
         ac[i:i + 1] = sclassifier.predict(np.array(auscores[i]).reshape((1, -1)))
+        s_ac.add(ac[i])
+
+    if len(s_ac) == 0:
+        return None
 
     l = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
     l.fit(auFeature,ac)
@@ -107,18 +114,24 @@ def reduce(features, components):
     pca.fit(X)
     return pca
 
-from multiprocessing import Pool
 
+def __flat(xs):
+    return xs.reshape(np.size(xs))
+
+_flat = __flat
 
 def fileReadAu(filename):
 
     a, sr = au.loadAudio(filename)
     res = au.toFreqBin(a,clusterLinearModel.framerate,sr)
     res = res[0:clusterLinearModel.length]
+    res = __flat(res)
 
     return res
 
 def fileReadVi(filename):
+
+    import cv2
 
     res = vi.generateFeature(filename,
                              math.ceil(clusterLinearModel.length/clusterLinearModel.framerate),
@@ -127,7 +140,7 @@ def fileReadVi(filename):
                              clusterLinearModel.videoBin,
                              clusterLinearModel.videoBin,
                              clusterLinearModel.videoBin)
-    res = np.reshape(res, (np.size(res)))
+    res = __flat(res)
     return res
 
 class clusterLinearModel:
@@ -136,51 +149,61 @@ class clusterLinearModel:
     videoBin = 2
     frameperseg = 1
     MIN_N_FILE_THRESHOLD = 2
-    multithread = 5
+    n_multiprocess = 0
 
     def __init__(self):
         self.la = None
         self.lv = None
         self.features = []
 
-        self.n_files = 0
+        self.audio_n_files = 0
+        self.video_n_files = 0
 
-        self.n_cluster = min(20, max(self.MIN_N_FILE_THRESHOLD,
-                                     self.n_files / 2))
         # must smaller than dataset
+
+    def update_a_n_cluster(self):
+        self.a_n_cluster = min(20, max(self.MIN_N_FILE_THRESHOLD,
+                                       self.audio_n_files / 2))
+
+    def update_v_n_cluster(self):
+        self.v_n_cluster = min(20, max(self.MIN_N_FILE_THRESHOLD,
+                                       self.video_n_files / 2))
 
     @staticmethod
     def from_pickle(pickle_fp):
         with open(pickle_fp, 'rb') as f:
             r = clusterLinearModel()
             ret = pickle.load(f)
-            r.la, r.lv = ret
+            r.audio_n_files, r.video_n_files, r.la, r.lv = ret
 
             return r
 
     def dump(self, pickle_fp):
         with open(pickle_fp, 'wb') as f:
-            pickle.dump([self.la, self.lv], f)
+            pickle.dump([self.audio_n_files, self.video_n_files,
+                         self.la, self.lv],
+                        f)
 
     def trainWithLogisticAu(self, audiofiles, auscores):
-        self.n_files = len(audiofiles)
-        if self.n_files < self.MIN_N_FILE_THRESHOLD:
+        self.audio_n_files = len(audiofiles)
+        if self.audio_n_files < self.MIN_N_FILE_THRESHOLD:
             return [None] * len(audiofiles)
+
+        self.update_a_n_cluster()
 
         auscores = list(auscores)
 
         print("loading")
         auFeature = []
-        if self.multithread == 0:
+        if self.n_multiprocess == 0:
             for afp in audiofiles:
                 a, sr = au.loadAudio(afp)
                 res = au.toFreqBin(a,self.framerate,sr)
                 res = res[0:self.length]
                 auFeature.append(np.reshape(res, (np.size(res))))
         else:
-            if __name__ == '__main__':
-                with Pool(self.multithread) as p:
-                    auFeature = p.map(fileReadAu, audiofiles)
+            with Pool(self.n_multiprocess) as p:
+                auFeature = p.map(fileReadAu, audiofiles)
 
         print("classifying")
 
@@ -189,7 +212,7 @@ class clusterLinearModel:
         scores = []
         scores.extend(auscores)
 
-        classifier = gmmScores(scores,self.n_cluster)
+        classifier = gmmScores(scores,self.a_n_cluster)
         if len(audiofiles) >= self.MIN_N_FILE_THRESHOLD:
             self.la = trainFeaturesLogistic(classifier,auFeature, auscores)
 
@@ -199,17 +222,20 @@ class clusterLinearModel:
                 audioIScore.append(self.la.predict_proba(i))
 
         return audioIScore
+
     def trainWithLogisticVi(self, videofiles, viscores):
-        self.n_files = len(videofiles)
-        if self.n_files < self.MIN_N_FILE_THRESHOLD:
+        self.video_n_files = len(videofiles)
+        if self.video_n_files < self.MIN_N_FILE_THRESHOLD:
             return  [None] * len(videofiles)
+
+        self.update_v_n_cluster()
 
         viscores = list(viscores)
 
         print("loading")
 
         viFeature = []
-        if self.multithread == 0:
+        if self.n_multiprocess == 0:
             for vfp in videofiles:
                 res = vi.generateFeature(vfp,
                                          math.ceil(self.length/self.framerate),
@@ -220,16 +246,15 @@ class clusterLinearModel:
                                          self.videoBin)
                 viFeature.append(np.reshape(res, (np.size(res))))
         else:
-            if __name__ == '__main__':
-                with Pool(self.multithread) as p:
-                    viFeature = p.map(fileReadVi, videofiles)
+            with Pool(self.n_multiprocess) as p:
+                viFeature.extend(p.map(fileReadVi, videofiles))
         print("classifying")
 
         viFeature = np.array(viFeature)
 
         scores = []
         scores.extend(viscores)
-        classifier = gmmScores(scores,self.n_cluster)
+        classifier = gmmScores(scores,self.v_n_cluster)
         if len(videofiles) >= self.MIN_N_FILE_THRESHOLD:
             self.lv = trainFeaturesLogistic(classifier,viFeature, viscores)
         videoIScore = []
@@ -240,22 +265,22 @@ class clusterLinearModel:
         return videoIScore
 
     def scoreAudio(self, audiofile):
-        if(self.la != None):
+        if not self.la:
             return []
-        audio, sr = au.loadAudio(audiofile)
-        audioFeature = au.toFreqBin(audio,self.framerate, sr)
-        audioFeature = audioFeature[0:self.length]
-        audioFeature =  np.reshape(audioFeature, (np.size(audioFeature)))
-        gmm = self.la.predict_proba(audioFeature)
-        return gmm
+
+        af = fileReadAu(audiofile)
+        gmm = self.la.predict_proba(af)
+
+        return _flat(gmm)
 
     def scoreVideo(self, videoFile):
-        if(self.lv != None):
+        if not self.lv:
             return []
-        videoFeature = vi.generateFeature(videoFile,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
-        videoFeature = np.reshape(videoFeature, (np.size(videoFeature)))
-        gmm = self.la.predict_proba(videoFeature)
-        return gmm
+
+        vf = fileReadVi(videoFile)
+        gmm = self.lv.predict_proba(vf)
+
+        return _flat(gmm)
 ## scores psychedelic
 # vibrant
 # neutral

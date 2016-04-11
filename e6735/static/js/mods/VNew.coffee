@@ -63,14 +63,12 @@ new_view = React.createClass
     sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
       1: 'Psychedelic'
       2: 'Vibrant'
-      3: 'Neutral'
-      4: 'Happy'
-      5: 'Lovely'
-      6: 'Serene'
-      7: 'Gloomy'
-      8: 'Energetic'
-      9: 'Romantic'
-      10: 'Violent'
+      3: 'Happy'
+      4: 'Lovely'
+      5: 'Gloomy'
+      6: 'Energetic'
+      7: 'Romantic'
+      8: 'Violent'
     })
     sliders_row = _div {className: "row"},
       sliders
@@ -171,7 +169,7 @@ module.exports = class VNew extends AbstractView
 
           data = new FormData()
           data.append 'file', dz.files[0]
-          data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..10])
+          data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..8])
           data.append 'title', title
           data.append 'artist', artist
 
@@ -182,9 +180,13 @@ module.exports = class VNew extends AbstractView
             contentType: false
             type: "POST"
             success: (data) =>
-              alert 'Upload successful!'
-              @hide()
-              @render()
+              switch data.status
+                when 'failed'
+                  alert "Upload failed! Reason: #{data.reason}."
+                when 'successful'
+                  alert 'Upload successful!'
+                  @hide()
+                  @render()
           }
     }
 
