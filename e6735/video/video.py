@@ -3,12 +3,12 @@ import numpy as np
 import math
 
 def generateRGBHist(frame, binX, binY, binZ):
-    hist = cv2.calcHist([frame],[0,1,2],None,[binX,binY,binZ],[0,255, 0, 255, 0, 255])
+    hist = cv2.calcHist([frame],[0,1,2],None,[binX,binY,binZ],[0,256, 0, 256, 0, 256])
     return hist.flatten()
 
 def generateHSVHist(frame, binX, binY, binZ):
     hsvImg = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
-    hist = cv2.calcHist([hsvImg],[0,1,2],None,[binX,binY,binZ],[0,180, 0, 255, 0, 255])
+    hist = cv2.calcHist([hsvImg],[0,1,2],None,[binX,binY,binZ],[0,180, 0, 256, 0, 256])
     return hist.flatten()
 
 def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, binY, binZ, HistType = 1):
