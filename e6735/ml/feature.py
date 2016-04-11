@@ -5,15 +5,10 @@ from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
 
 
-class Feature:
-    def __init__(self):
-        self.score = np.zeros(10)
-        self.audio = np.zeros((300*6))
-        self.video = np.zeros((300*6))
 
 
-class MatchingModel:
 
+class matchingModel:
     def __init__(self):
         self.audioBasis = None
         self.videoBasis = None
@@ -38,7 +33,7 @@ class MatchingModel:
         return 2*w.T().dot(w)
 
 
-class TrainModelLeastError:
+class trainModelLeastError:
     def __init__(self):
         self.basis = matchingModel()
         self.features = []
@@ -88,71 +83,63 @@ class TrainModelLeastError:
         self.basis.videoBasis = res[1]
 
 
-def gmmScores(features, classnum):
+def gmmScores(scores, classnum):
     g = mixture.GMM(n_components = classnum)
-    scores = []
-    for i in range(len(features)):
-        scores.append(features[i].score)
     return g.fit(scores)
 
 
-def trainFeaturesLogistic(sclassifier, features):
-    X = []
-    XV = []
-    Y = []
-    for i in features:
-        X.append(i.audio)
-      #  XV.append(i.video)
-        Y.append(sclassifier.predict(i.score))
+def trainFeaturesLogistic(sclassifier, auFeature, viFeature, auscores, viscores):
     l = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
-    l.fit(X,Y)
+    l.fit(auFeature,auscores)
     lv = linear_model.LogisticRegression(solver="lbfgs", multi_class="multinomial")
-    #lv.fit(XV,Y)
+    lv.fit(viFeature,viscores)
     return l, lv
 
 
 def reduce(features, components):
-    a = 10
     n = np.size(features)
-    n = (int)(n/len(features))
+    n = int(n/len(features))
     X = np.reshape(features, (len(features), n))
-    pca = decomposition.PCA(n_compnents=components)
+    pca = decomposition.PCA(components)
     pca.fit(X)
     return pca
 
-class ClusterLinearModel:
-    def __init__(self):
+class clusterLinearModel:
+    def __init(self):
         self.la = None
         self.lv = None
         self.features = []
         self.framerate = 30
         self.length = 1000
         self.videoBin = 24
-        self.audioIScore = []
-        self.videoIScore = []
-        self.audiofiles = []
-        self.videofiles = []
 
-    def trainWithLogistic(self, audiofiles, videofiles,scores):
-        self.audiofiles = audiofiles
-        self.videofiles = videofiles
+        self.n_cluster = 2 #must smaller than dataset
+
+    def trainWithLogistic(self, audiofiles, videofiles, auscores, viscores):
         print("loading")
-        for i in range(len(scores)):
-            self.features.append(feature())
-            print(self.features[i])
+        auFeature = []
+        viFeature = []
+        for i in range(len(audiofiles)):
             a, sr = au.loadAudio(audiofiles[i])
             res = au.toFreqBin(a,self.framerate,sr)
             res = res[0:self.length]
-            self.features[i].audio = np.reshape(res, (np.size(res)))
-            self.features[i].score = scores[i]
+            auFeature.append(np.reshape(res, (np.size(res))))
+        for i in range(len(videofiles)):
             res = vi.generateFeature(i,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
-            self.features[i].video = np.reshape(res, (np.size(res)))
+            viFeature.append(np.reshape(res, (np.size(res))))
         print("classifying")
-        classifier = gmmScores(self.features,2)
-        self.la, self.lv = trainFeaturesLogistic(classifier,self.features)
-        for i in self.features:
-            self.audioIScore.append(self.la.predict_proba(i.audio))
-            self.videoIScore.append(self.la.predict_proba(i.video))
+        scores = []
+        scores.append(auscores)
+        scores.append(viscores)
+        classifier = gmmScores(scores,self.n_cluster)
+        self.la, self.lv = trainFeaturesLogistic(classifier,auFeature, viFeature,auscores,viscores)
+        audioIScore = []
+        videoIScore = []
+        for i in auFeature:
+            audioIScore.append(self.la.predict_proba(i))
+        for i in viFeature:
+            videoIScore.append(self.lv.predict_proba(i))
+        return audioIScore, videoIScore
 
     def scoreAudio(self, audiofile):
         audio, sr = au.loadAudio(audiofile)
@@ -160,22 +147,12 @@ class ClusterLinearModel:
         audioFeature = audioFeature[0:self.length]
         audioFeature =  np.reshape(audioFeature, (np.size(audioFeature)))
         gmm = self.la.predict_proba(audioFeature)
-        #TODO query with database
-        auDis = []
-        for i in range(len(self.features)):
-            auDis.append((self.audiofiles[i], np.linalg.norm(self.audioIScore[i] - gmm)))
-        sorted(auDis, key=lambda ascore:ascore[1])
-        return auDis
+        return gmm
 
     def scoreVideo(self, videoFile):
         videoFeature = vi.generateFeature(videoFile,self.length,self.videoBin/3, self.videoBin/3, self.videoBin/3)
         gmm = self.la.predict_proba(videoFeature)
-        #TODO query with database
-        viDis = []
-        for i in range(len(self.features)):
-            viDis.append((self.videofiles[i], np.linalg.norm(self.videoIScore[i] - gmm)))
-        sorted(viDis, key=lambda ascore:ascore[1])
-        return viDis
+        return gmm
 ## scores psychedelic
 # vibrant
 # neutral
