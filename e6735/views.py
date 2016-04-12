@@ -80,7 +80,7 @@ def query_similar_multimedia_files(req, fp, ext, is_video, type_):
             for audio in db.query(Audio).all():
                 if audio.canonical_repr is not None:
                     audio.confidence =\
-                        distance.cosine(audio.canonical_repr, gmm_score)
+                        1 - distance.cosine(audio.canonical_repr, gmm_score)
                     ret.append(audio)
         else:
             gmm_score = mln.scoreAudio(fp)
@@ -89,7 +89,7 @@ def query_similar_multimedia_files(req, fp, ext, is_video, type_):
             for video in db.query(Video).all():
                 if video.canonical_repr is not None:
                     video.confidence =\
-                        distance.cosine(video.canonical_repr, gmm_score)
+                        1 - distance.cosine(video.canonical_repr, gmm_score)
                     ret.append(video)
     else:
         if is_video:

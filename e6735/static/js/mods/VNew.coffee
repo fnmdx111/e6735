@@ -114,26 +114,18 @@ new_view = React.createClass
   componentDidUpdate: ->
     $$s = @state ? {}
     if $$s.type?.match /video/
-      if not preview_video?
-        wrapper = document.createElement 'div'
-        wrapper.innerHTML = """<video
+      wrapper = document.createElement 'div'
+      wrapper.innerHTML = """<video
   id='video-preview'
   class='video-js vjs-default-skin embed-responsive-item'
   preload='auto' controls height='322' width='640'>
-    <source src='#{$$s.fp}' type='#{$$s.type}' />
+  <source src='#{$$s.fp}' type='#{$$s.type}' />
 </video>"""
 
-        v = wrapper.firstChild
-        @refs.target.appendChild(v)
-        videojs v, {}, ->
-          preview_video = this
-      else
-        preview_video.src({
-          src: $$s.fp
-          type: $$s.type
-        })
-        preview_video.load()
-        preview_video.show()
+      v = wrapper.firstChild
+      @refs.target.appendChild(v)
+      videojs v, {}, ->
+        preview_video = this
 
     else if $$s.type?.match /audio/
       preview_video?.reset().hide()
@@ -157,14 +149,18 @@ module.exports = class VNew extends AbstractView
 
       init: (dz) =>
         $('#submit').on 'click', =>
+          $('.waiting').removeClass 'invisible'
+
           title = $('#title-input').val()
           artist = $('#artist-input').val()
 
           if title == ""
             alert "Title cannot be empty!"
+            $('.waiting').addClass 'invisible'
             return
           if artist == ""
             alert "Artist cannot be empty!"
+            $('.waiting').addClass 'invisible'
             return
 
           data = new FormData()
@@ -180,6 +176,8 @@ module.exports = class VNew extends AbstractView
             contentType: false
             type: "POST"
             success: (data) =>
+              $('.waiting').addClass 'invisible'
+
               switch data.status
                 when 'failed'
                   alert "Upload failed! Reason: #{data.reason}."
@@ -187,6 +185,8 @@ module.exports = class VNew extends AbstractView
                   alert 'Upload successful!'
                   @hide()
                   @render()
+            error: =>
+              $('.waiting').addClass 'invisible'
           }
     }
 
