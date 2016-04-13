@@ -69,7 +69,7 @@ class Video(MultimediaMixin, Base):
 
 class Audio(MultimediaMixin, Base):
 
-    def __init__(self, title, artist, ext='ogg', length=0):
+    def __init__(self, title, artist, ext='mp3', length=0):
         self.title = title
         self.artist = artist
         self.length = length

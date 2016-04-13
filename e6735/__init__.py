@@ -8,13 +8,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from e6735.ml import ClusterLinearModel
 from e6735.models import Audio, Video
 
-import time
 import e6735.up_config
 
 from e6735.models import (
     DBSession,
     Base,
     )
+from e6735.scripts import lreg_train
 
 abs_sys_path = os.getcwd()
 
@@ -41,38 +41,8 @@ def db(request):
 
 def refit_model(registry):
     db = registry.dbmaker()
-    a_n_total = db.query(Audio).count()
-    if a_n_total == registry.mln.audio_n_files:
-        pass
-    else:
-        audios = db.query(Audio).all()
-        a_isc = registry.mln.trainWithLogisticAu(
-            list(map(mmfp, audios)),
-            list(map(lambda a: a.score, audios)))
 
-        for isc, a in zip(a_isc, audios):
-            a.canonical_repr = isc
-
-    v_n_total = db.query(Video).count()
-    if v_n_total == registry.mln.video_n_files:
-        pass
-    else:
-        videos = db.query(Video).all()
-        v_isc = registry.mln.trainWithLogisticVi(
-            list(map(mmfp, videos)),
-            list(map(lambda v: v.score, videos)))
-
-        for isc, v in zip(v_isc, videos):
-            v.canonical_repr = isc
-
-    try:
-        db.commit()
-        registry.mln.dump(
-            registry.settings['persistence.ml'])
-    except IntegrityError:
-        db.rollback()
-    finally:
-        db.close()
+    lreg_train.train(db, mmfp=mmfp, clm=registry.mln)
 
 
 def main(global_config, **settings):
