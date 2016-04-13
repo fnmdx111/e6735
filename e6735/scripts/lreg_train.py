@@ -4,7 +4,7 @@ from operator import attrgetter
 
 import sys
 
-import transaction
+import time
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
@@ -35,14 +35,20 @@ def train(db_session, mmfp=lambda _: _, force=True, clm=None,
 
         for g, o in zip(a_gmm, a_objs):
             o.canonical_repr = g
+            print('Audio object %s - %s.%s: gmm = %s' % (
+                o.title, o.artist, o.ext, g
+            ))
 
         for g, o in zip(v_gmm, v_objs):
             o.canonical_repr = g
+            print('Video object %s - %s.%s: gmm = %s' % (
+                o.title, o.artist, o.ext, g
+            ))
 
         db_session.commit()
         clm.dump(os.path.join(prefix, 'e6735', 'ml', 'pst.bin'))
 
-    except Exception as e:
+    except IntegrityError as e:
         print(e)
         db_session.rollback()
     finally:
@@ -126,10 +132,14 @@ if __name__ == '__main__':
                 return os.path.join(program_prefix, 'videos', fp.filename())
             raise TypeError
 
+        t1 = time.perf_counter()
         train(session, mmfp=mmfp)
-        print('Trained %d audios and %d videos successfully.' % (
-            len(session.query(Audio).count()),
-            len(session.query(Video).count())
+        t2 = time.perf_counter()
+
+        print('Trained %d audios and %d videos successfully in %s seconds.' % (
+            session.query(Audio).count(),
+            session.query(Video).count(),
+            t2 - t1
         ))
     except IntegrityError:
         session.rollback()

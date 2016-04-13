@@ -7,6 +7,8 @@ import math
 from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
 import pickle
+# from e6735.audio import audioAna as auc
+from e6735.audio import audio_feat as auc
 
 
 class matchingModel:
@@ -103,8 +105,9 @@ def trainFeaturesLogistic(sclassifier, auFeature, auscores):
 
     l = linear_model.LogisticRegression(solver="lbfgs",
                                         multi_class="multinomial")
+
     l.fit(auFeature, ac)
-    return l
+    return ac, l
 
 
 def reduce(features, components):
@@ -125,7 +128,7 @@ _flat = __flat
 
 def fileReadAu(filename):
     a, sr = au.loadAudio(filename)
-    res = au.toFreqBin(a, clusterLinearModel.framerate, sr)
+    res = auc.toFreqBin(a, clusterLinearModel.framerate, sr)
     res = res[0:clusterLinearModel.length]
     res = __flat(res)
 
@@ -163,6 +166,9 @@ class clusterLinearModel:
 
         self.audio_n_files = 0
         self.video_n_files = 0
+
+        self.a_inv_class_idx = set()
+        self.v_inv_class_idx = set()
 
         self.gmm_n_threshold = 2
 
@@ -212,31 +218,47 @@ class clusterLinearModel:
 
         a_ret = []
         if len(audio_fps) > 2:
-            self.la = trainFeaturesLogistic(score_classifier,
-                                            a_feats,
-                                            a_scores)
-            a_ret.extend(map(lambda f: _flat(self.la.predict_proba(f)),
-                             a_feats))
+            a_pscores, self.la = trainFeaturesLogistic(score_classifier,
+                                                       a_feats,
+                                                       a_scores)
+            self.a_inv_class_idx = set(map(int, a_pscores))
+
+            def _a(feat):
+                return self.normalize(self.la.predict_proba(feat),
+                                      self.a_inv_class_idx)
+            a_ret.extend(map(_a, a_feats))
 
         v_ret = []
         if len(video_fps) > 2:
-            self.lv = trainFeaturesLogistic(score_classifier,
-                                            v_feats,
-                                            v_scores)
-            v_ret.extend(map(lambda f: _flat(self.lv.predict_proba(f)),
-                             v_feats))
+            v_pscores, self.lv = trainFeaturesLogistic(score_classifier,
+                                                       v_feats,
+                                                       v_scores)
+            self.v_inv_class_idx = set(map(int, v_pscores))
+
+            def _v(feat):
+                return self.normalize(self.lv.predict_proba(feat),
+                                      self.v_inv_class_idx)
+            v_ret.extend(map(_v, v_feats))
 
         return a_ret or [None] * len(audio_fps), \
             v_ret or [None] * len(video_fps)
 
-    def scoreAudio(self, audiofile):
+    def normalize(self, gmm, ref):
+        gmm = _flat(gmm)
+        ret = [0.0 for _ in range(self.gmm_n_threshold)]
+        for i, idx in enumerate(ref):
+            ret[idx] = gmm[i]
+
+        return ret
+
+    def scoreAudio(self, afp):
         if not self.la:
             return []
 
-        af = fileReadAu(audiofile)
+        af = fileReadAu(afp)
         gmm = self.la.predict_proba(af)
 
-        return _flat(gmm)
+        return self.normalize(gmm, self.a_inv_class_idx)
 
     def scoreVideo(self, videoFile):
         if not self.lv:
@@ -245,8 +267,7 @@ class clusterLinearModel:
         vf = fileReadVi(videoFile)
         gmm = self.lv.predict_proba(vf)
 
-        return _flat(gmm)
-
+        return self.normalize(gmm, self.v_inv_class_idx)
 
 # scores psychedelic
 # vibrant
