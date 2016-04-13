@@ -64,7 +64,7 @@ new_view = React.createClass
       1: 'Psychedelic'
       2: 'Vibrant'
       3: 'Happy'
-      4: 'Lovely'
+      4: 'Adorable'
       5: 'Gloomy'
       6: 'Energetic'
       7: 'Romantic'
