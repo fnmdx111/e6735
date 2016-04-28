@@ -32,15 +32,15 @@ class MultimediaMixin:
     artist = Column(Text)
     length = Column(SmallInteger)
     canonical_repr = Column(PickleType)
+    score = Column(PickleType)
+    ext = Column(Text)
 
     @declared_attr
     def __table_args__(cls):
         return (UniqueConstraint('title', 'artist'),)
 
-    extension = None
-
     def filename(self):
-        return '%s - %s.%s' % (self.title, self.artist, self.extension)
+        return '%s - %s.%s' % (self.title, self.artist, self.ext)
 
     def __json__(self, req):
         return {
@@ -53,28 +53,28 @@ class MultimediaMixin:
 
 
 class Video(MultimediaMixin, Base):
-    extension = 'mp4'
 
     width = Column(SmallInteger)
     height = Column(SmallInteger)
 
-    def __init__(self, title, artist, width, height, length=0):
+    def __init__(self, title, artist, width, height, length=0, ext='mp4'):
         self.title = title
         self.artist = artist
         self.length = length
         self.width = width
         self.height = height
         self.confidence = 0.0
+        self.ext = ext
 
 
 class Audio(MultimediaMixin, Base):
-    extension = 'ogg'
 
-    def __init__(self, title, artist, length=0):
+    def __init__(self, title, artist, ext='mp3', length=0):
         self.title = title
         self.artist = artist
         self.length = length
         self.confidence = 0.0
+        self.ext = ext
 
     def from_video(self):
         pass

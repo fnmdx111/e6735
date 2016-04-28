@@ -12,7 +12,7 @@ module.exports = class AbstractView
 
   render: ->
     @shown = true
-    @$el?.removeClass 'invisible'
+    @$el?.show()
 
   unmount: ->
     ReactDOM.unmountComponentAtNode @anchor
@@ -20,11 +20,11 @@ module.exports = class AbstractView
   show: ->
     if not @shown
       @shown = true
-      @$el?.removeClass 'invisible'
+      @$el?.show()
 
   hide: (unmount=true) ->
     if @shown
       @shown = false
-      @$el?.addClass 'invisible'
+      @$el?.hide()
       @unmount() if unmount
 

@@ -1,6 +1,12 @@
+import os
+import threading
+
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker, scoped_session
+from e6735.ml import ClusterLinearModel
+from e6735.models import Audio, Video
 
 import e6735.up_config
 
@@ -8,7 +14,15 @@ from e6735.models import (
     DBSession,
     Base,
     )
+from e6735.scripts import lreg_train
 
+abs_sys_path = os.getcwd()
+
+def mmfp(mm):
+    return os.path.join(abs_sys_path,
+                        'e6735', 'resources',
+                        'videos' if isinstance(mm, Video) else 'audios',
+                        mm.filename())
 
 def db(request):
     session = request.registry.dbmaker()
@@ -25,6 +39,12 @@ def db(request):
     return session
 
 
+def refit_model(registry):
+    db = registry.dbmaker()
+
+    lreg_train.train(db, mmfp=mmfp, clm=registry.mln)
+
+
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -34,8 +54,12 @@ def main(global_config, **settings):
 
     config = Configurator(settings=settings)
 
-    config.registry.dbmaker = sessionmaker(bind=engine)
+    config.registry.dbmaker = scoped_session(sessionmaker(bind=engine))
     config.add_request_method(db, reify=True)
+
+    def refit(request):
+        return refit_model(request.registry)
+    config.registry.refit = refit
 
     config.include('pyramid_chameleon')
 
@@ -45,6 +69,13 @@ def main(global_config, **settings):
 
     config.add_route('home', '/')
     config.add_route('upload', '/upload')
-    config.add_route('query', '/query')
+    config.add_route('htg-query', '/htg-query')
+    config.add_route('hmg-query', '/hmg-query')
     config.scan()
+
+    ml_path = config.registry.settings['persistence.ml']
+    config.registry.mln = ClusterLinearModel.from_pickle(ml_path)
+
+    # threading.Thread(target=refit_model, daemon=True).start()
+
     return config.make_wsgi_app()

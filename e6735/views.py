@@ -1,10 +1,16 @@
+import os
 import random
 import shutil
 from operator import attrgetter
 from tempfile import NamedTemporaryFile
 
-import time
+
+import numpy as np
 from pyramid.view import view_config
+from scipy.spatial import distance
+from sqlalchemy.exc import IntegrityError
+
+from e6735 import mmfp
 from e6735.models import Video, Audio
 
 
@@ -14,49 +20,134 @@ def home(request):
 
 
 @view_config(route_name='upload', renderer='json')
-def upload_view(request):
-    print(request.POST['file'],
-          request.POST['dims'],
-          request.POST['title'],
-          request.POST['artist'])
-    return {}
+def upload_new(request):
+    fsrc = request.POST['file']
+    title = request.POST['title']
+    artist = request.POST['artist']
+
+    dims = map(float, request.POST['dims'].split(','))
+
+    if fsrc.type.startswith('video'):
+        v = Video(title, artist, 0, 0, ext=fsrc.type.split('/')[1])
+        v.score = tuple(dims)
+        v.canonical_repr = None
+
+        with open(mmfp(v), 'wb') as f:
+            shutil.copyfileobj(fsrc.file, f)
+            try:
+                request.db.add(v)
+                request.db.commit()
+            except IntegrityError:
+                request.db.rollback()
+                os.remove(mmfp(v))
+                return {'status': 'failed',
+                        'reason': 'Database error.'}
+    else:
+        a = Audio(title, artist, ext=fsrc.type.split('/')[1])
+        a.score = tuple(dims)
+        a.canonical_repr = None
+
+        with open(mmfp(a), 'wb') as f:
+            shutil.copyfileobj(fsrc.file, f)
+            try:
+                request.db.add(a)
+                request.db.commit()
+            except IntegrityError:
+                request.db.rollback()
+                os.remove(mmfp(a))
+                return {'status': 'failed',
+                        'reason': 'Database error.'}
+
+    request.registry.refit(request)
+
+    return {'status': 'successful'}
 
 
-def query_similar_multimedia_files(db, filename, ext, is_video):
-    time.sleep(1)
-    filename += ext
+def query_similar_multimedia_files(req, fp, ext, is_video, type_):
+    db = req.db
 
     def append_confidence(mm):
         mm.confidence = random.random()
         return mm
 
-    if is_video:
-        ret = map(append_confidence, db.query(Audio).all())
+    if type_ == 'htg':
+        mln = req.registry.mln
+
+        if is_video:
+            gmm_score = mln.scoreVideo(fp)
+
+            ret = []
+            for audio in db.query(Audio).all():
+                if audio.canonical_repr is not None:
+                    audio.confidence =\
+                        1 - distance.cosine(audio.canonical_repr, gmm_score)
+                    ret.append(audio)
+        else:
+            gmm_score = mln.scoreAudio(fp)
+
+            ret = []
+            for video in db.query(Video).all():
+                if video.canonical_repr is not None:
+                    video.confidence =\
+                        1 - distance.cosine(video.canonical_repr, gmm_score)
+                    ret.append(video)
     else:
-        ret = map(append_confidence, db.query(Video).all())
+        if is_video:
+            ret = map(append_confidence, db.query(Video).all())
+        else:
+            ret = map(append_confidence, db.query(Audio).all())
 
     return sorted(ret, key=attrgetter('confidence'), reverse=True)
 
 
-@view_config(route_name='query', renderer='json')
-def receive_query_subject(request):
+def open_request_file(req):
     key = 'file'
-    fn = request.POST[key].filename
-    f = request.POST[key].file
+    fn = req.POST[key].filename
+    f = req.POST[key].file
 
-    with NamedTemporaryFile() as tmpf:
+    return fn, f
+
+
+@view_config(route_name='htg-query', renderer='json')
+def heterogeneous_query(request):
+    fn, f = open_request_file(request)
+    ext = fn.rsplit('.', maxsplit=1)[1]
+
+    with NamedTemporaryFile(suffix='.' + ext) as tmpf:
         shutil.copyfileobj(f, tmpf)
 
-        results = query_similar_multimedia_files(request.db,
+        results = query_similar_multimedia_files(request,
                                                  tmpf.name,
-                                                 fn.rsplit('.', maxsplit=1)[1],
-                                                 fn.endswith('mp4'))
+                                                 ext,
+                                                 fn.endswith('mp4'),
+                                                 type_='htg')
 
         type_ = 'audio' if fn.endswith('mp4') else 'video'
         return {'result': results, 'status': 'ok',
                 'resource_path': request
                     .static_url('e6735:resources/%ss/' % type_),
                 'type': type_}
+
+
+@view_config(route_name='hmg-query', renderer='json')
+def homogeneous_query(request):
+    fn, f = open_request_file(request)
+    with NamedTemporaryFile() as tmpf:
+        shutil.copyfileobj(f, tmpf)
+
+        results = query_similar_multimedia_files(request.db,
+                                                 tmpf.name,
+                                                 fn.rsplit('.', maxsplit=1)[1],
+                                                 fn.endswith('mp4'),
+                                                 type_='hmg')
+
+        type_ = 'video' if fn.endswith('mp4') else 'audio'
+
+        return {
+            'result': results, 'status': 'ok',
+            'resource_path': request.static_url('e6735:resources/%ss/' % type_),
+            'type': type_
+        }
 
 
 conn_err_msg = """\

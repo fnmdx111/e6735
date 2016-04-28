@@ -16,6 +16,8 @@ from e6735.models import (
     Audio,
     )
 
+from e6735.ml import ClusterLinearModel
+
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
@@ -39,8 +41,7 @@ def main(argv=sys.argv):
     Base.metadata.create_all(engine)
 
     with transaction.manager:
-        for t, a, w, h, l in [('B4U', 'Naoki', 480, 360, 100),
-                              ('Night sky', 'USAO', 1280, 720, 123),
-                              ('smooooch・∀・', 'kors k', 1080, 720, 117)]:
-            DBSession.add(Video(t, a, w, h, l))
-            DBSession.add(Audio(t, a, l))
+        clm = ClusterLinearModel()
+        clm.dump(settings['persistence.ml'])
+
+        pass

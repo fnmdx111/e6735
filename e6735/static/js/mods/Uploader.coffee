@@ -5,12 +5,13 @@ Dropzone = React.createFactory(require 'react-dropzone-component')
 module.exports = React.createClass
   render: ->
     $$p = this.props
+    $$s = this.state ? {url: '/htg-query'}
 
     Dropzone {
       config: {
         iconFiletypes: ['mp4', 'mp3', 'ogg']
         showFiletypeIcon: true
-        postUrl: $$p.url
+        postUrl: $$s.url
       }
       djsConfig: {
         autoProcessQueue: if $$p.auto_upload? then $$p.auto_upload else true

@@ -8,3 +8,8 @@ Two training method:
                               automatic generate score criteria: PCA -> minimize video&audio error -> generate score criteria
 implemented api:
     clusterLinearModel
+
+TODO
+----
+
+* Cut the features by the length of the shortest sample

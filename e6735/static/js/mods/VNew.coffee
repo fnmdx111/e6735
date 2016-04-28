@@ -61,16 +61,14 @@ new_view = React.createClass
     preview = SimplePanel {id: 'preview', title: "Preview"}, pv
 
     sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
-      1: 'Dim1'
-      2: 'Dim2'
-      3: 'Dim3'
-      4: 'Dim4'
-      5: 'Dim5'
-      6: 'Dim6'
-      7: 'Dim7'
-      8: 'Dim8'
-      9: 'Dim9'
-      10: 'Dim10'
+      1: 'Psychedelic'
+      2: 'Vibrant'
+      3: 'Happy'
+      4: 'Adorable'
+      5: 'Gloomy'
+      6: 'Energetic'
+      7: 'Romantic'
+      8: 'Violent'
     })
     sliders_row = _div {className: "row"},
       sliders
@@ -116,26 +114,18 @@ new_view = React.createClass
   componentDidUpdate: ->
     $$s = @state ? {}
     if $$s.type?.match /video/
-      if not preview_video?
-        wrapper = document.createElement 'div'
-        wrapper.innerHTML = """<video
+      wrapper = document.createElement 'div'
+      wrapper.innerHTML = """<video
   id='video-preview'
   class='video-js vjs-default-skin embed-responsive-item'
   preload='auto' controls height='322' width='640'>
-    <source src='#{$$s.fp}' type='#{$$s.type}' />
+  <source src='#{$$s.fp}' type='#{$$s.type}' />
 </video>"""
 
-        v = wrapper.firstChild
-        @refs.target.appendChild(v)
-        videojs v, {}, ->
-          preview_video = this
-      else
-        preview_video.src({
-          src: $$s.fp
-          type: $$s.type
-        })
-        preview_video.load()
-        preview_video.show()
+      v = wrapper.firstChild
+      @refs.target.appendChild(v)
+      videojs v, {}, ->
+        preview_video = this
 
     else if $$s.type?.match /audio/
       preview_video?.reset().hide()
@@ -159,19 +149,23 @@ module.exports = class VNew extends AbstractView
 
       init: (dz) =>
         $('#submit').on 'click', =>
+          $('.waiting').removeClass 'invisible'
+
           title = $('#title-input').val()
           artist = $('#artist-input').val()
 
           if title == ""
             alert "Title cannot be empty!"
+            $('.waiting').addClass 'invisible'
             return
           if artist == ""
             alert "Artist cannot be empty!"
+            $('.waiting').addClass 'invisible'
             return
 
           data = new FormData()
           data.append 'file', dz.files[0]
-          data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..10])
+          data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..8])
           data.append 'title', title
           data.append 'artist', artist
 
@@ -182,9 +176,17 @@ module.exports = class VNew extends AbstractView
             contentType: false
             type: "POST"
             success: (data) =>
-              alert 'Upload successful!'
-              @hide()
-              @render()
+              $('.waiting').addClass 'invisible'
+
+              switch data.status
+                when 'failed'
+                  alert "Upload failed! Reason: #{data.reason}."
+                when 'successful'
+                  alert 'Upload successful!'
+                  @hide()
+                  @render()
+            error: =>
+              $('.waiting').addClass 'invisible'
           }
     }
 
