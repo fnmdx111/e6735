@@ -1,7 +1,8 @@
 from multiprocessing import Pool
 
 import numpy as np
-from e6735.video import video as vi
+import time
+
 from e6735.audio import audioAna as au
 import math
 from sklearn import mixture, linear_model, decomposition
@@ -9,6 +10,8 @@ from scipy import optimize
 import pickle
 # from e6735.audio import audioAna as auc
 from e6735.audio import audio_feat as auc
+# from e6735.video import video_feat as vic
+from e6735.video import video as vic
 
 
 class matchingModel:
@@ -136,17 +139,15 @@ def fileReadAu(filename):
 
 
 def fileReadVi(filename):
-    import cv2
-
-    res = vi.generateFeature(filename,
-                             math.ceil(
-                                 clusterLinearModel.length /
-                                 clusterLinearModel.framerate),
-                             clusterLinearModel.length,
-                             clusterLinearModel.frameperseg,
-                             clusterLinearModel.videoBin,
-                             clusterLinearModel.videoBin,
-                             clusterLinearModel.videoBin)
+    res = vic.generateFeature(filename,
+                              math.ceil(
+                                  clusterLinearModel.length /
+                                  clusterLinearModel.framerate),
+                              clusterLinearModel.length,
+                              clusterLinearModel.frameperseg,
+                              clusterLinearModel.videoBin,
+                              clusterLinearModel.videoBin,
+                              clusterLinearModel.videoBin)
     res = __flat(res)
     return res
 
@@ -171,8 +172,10 @@ class clusterLinearModel:
         self.v_inv_class_idx = set()
 
         self.gmm_n_threshold = 2
-
         # must smaller than dataset
+
+        if self.n_multiprocess > 0:
+            self.pool = Pool(processes=self.n_multiprocess)
 
     def update_gmm_n_threshold(self, n_total):
         if n_total < 5:
@@ -180,6 +183,10 @@ class clusterLinearModel:
         else:
             flexible_total = math.ceil(n_total / 2)
         self.gmm_n_threshold = min(20, max(2, flexible_total))
+
+    def uniform_feat(self, feats):
+        min_length = min(*map(lambda f: f.shape[0], feats))
+        return list(map(lambda f: f[:min_length], feats))
 
     @staticmethod
     def from_pickle(pickle_fp):
@@ -197,6 +204,8 @@ class clusterLinearModel:
                         f)
 
     def train(self, a_scores, audio_fps, v_scores, video_fps):
+        print('training')
+
         n_total = len(audio_fps) + len(video_fps)
         self.update_gmm_n_threshold(n_total)
 
@@ -208,12 +217,21 @@ class clusterLinearModel:
         score_classifier = gmmScores(scores, self.gmm_n_threshold)
 
         if self.n_multiprocess == 0:
-            a_feats = list(map(fileReadAu, audio_fps))
-            v_feats = list(map(fileReadVi, video_fps))
+            t1 = time.perf_counter()
+            a_feats = self.uniform_feat(list(map(fileReadAu, audio_fps)))
+            t2 = time.perf_counter()
+            print('Extracted %s audio clips in %s seconds.' % (
+                len(a_feats), t2 - t1
+            ))
+            v_feats = self.uniform_feat(list(map(fileReadVi, video_fps)))
+            t3 = time.perf_counter()
+            print('Extracted %s video clips in %s seconds.' % (
+                len(v_feats), t3 - t2
+            ))
         else:
-            with Pool(self.n_multiprocess) as p:
+            with self.pool as p:
                 a_feats = p.map(fileReadAu, audio_fps)
-            with Pool(self.n_multiprocess) as p:
+            with self.pool as p:
                 v_feats = p.map(fileReadVi, video_fps)
 
         a_ret = []

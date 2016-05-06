@@ -23,11 +23,12 @@ def toFreqBin(audio, int framerate, int samplerate):
 @cython.wraparound(False)
 cdef count_bins(np.ndarray[FDTYPE, ndim=2] freq,
                 np.ndarray[DDTYPE, ndim=2] D):
-    shape = freq.shape
-    cdef int _t = shape[0]
-    cdef int t= shape[1]
+    cdef int _t = freq.shape[0], t = freq.shape[1]
+    cdef int i, j
+
     cdef double f = 0.0
     cdef np.ndarray[FDTYPE, ndim=2] re = np.zeros((t, 6))
+
     for i in range(_t):
         for j in range(t):
             f = freq[i, j]

@@ -1,3 +1,4 @@
+
 import cv2
 import numpy as np
 import math
@@ -17,7 +18,8 @@ def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, bi
         print ("could not open")
         return
 
-    histSum = np.array([]).reshape(0, binX * binY * binZ)
+    # histSum = np.array([]).reshape(0, binX * binY * binZ)
+    histSum = []
 
     fps = vidcap.get(cv2.CAP_PROP_FPS)
     length = int(time_length * fps)
@@ -33,42 +35,40 @@ def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, bi
         
     num = 1
 
-    hist = np.zeros((1, binX * binY * binZ))
+    hist = np.zeros(binX * binY * binZ)
     count = 0
     success,image = vidcap.read()
     
-    while (success and int(length) > int(count * spacing)) :
-        if (segment_length * num <= count * spacing) :
-            hist = hist / framePerSegment
-            histSum = np.vstack((histSum, hist))
+    while success and int(length) > int(count * spacing):
+        if segment_length * num <= count * spacing:
+            hist /= framePerSegment
+            histSum.append(hist)
 
-            num = num + 1
+            num += 1
 
             if HistType == 0 :
                 hist = generateRGBHist(image, binX, binY, binZ)
-            else :
-                if HistType == 1 :
-                    hist = generateHSVHist(image, binX, binY, binZ)
-            hist = hist / np.sum(hist)
+            elif HistType == 1 :
+                hist = generateHSVHist(image, binX, binY, binZ)
+            hist /= np.sum(hist)
         else :
             if HistType == 0 :
                 tmp = generateRGBHist(image, binX, binY, binZ)
-            else :
-                if HistType == 1 :
-                    tmp = generateHSVHist(image, binX, binY, binZ)
-            tmp = tmp / np.sum(tmp)
-            hist = hist + tmp
-        count = count + 1
+            elif HistType == 1 :
+                tmp = generateHSVHist(image, binX, binY, binZ)
+            tmp /= np.sum(tmp)
+            hist += tmp
+        count += 1
         start = vidcap.get(cv2.CAP_PROP_POS_FRAMES)
-        while (start < int(count * spacing)) :
+        while start < int(count * spacing) :
             image = vidcap.read()
             start = start + 1
         # print (str(start) + "," + str(segment_length * num) + "," + str(length))
         success,image = vidcap.read()
         
-    hist = hist / framePerSegment
-    histSum = np.vstack((histSum, hist))
-    return histSum
+    hist /= framePerSegment
+    histSum.append(hist)
+    return np.array(histSum, dtype=np.float64)
 
 def generateAMatrix(binX, binY, binZ):
     A = np.zeros((binX * binY * binZ, binX * binY * binZ))
