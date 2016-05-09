@@ -22,7 +22,10 @@ def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, bi
     histSum = []
 
     fps = vidcap.get(cv2.CAP_PROP_FPS)
-    length = int(time_length * fps)
+    if time_length == 0:
+        length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    else:
+        length = int(time_length * fps)
     if length > vidcap.get(cv2.CAP_PROP_FRAME_COUNT):
         length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     if length < segmentNum:
@@ -34,7 +37,6 @@ def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, bi
     spacing = segment_length / framePerSegment
         
     num = 1
-
     hist = np.zeros(binX * binY * binZ)
     count = 0
     success,image = vidcap.read()
@@ -45,12 +47,12 @@ def generateFeature(filename, time_length, segmentNum, framePerSegment, binX, bi
             histSum.append(hist)
 
             num += 1
-
             if HistType == 0 :
                 hist = generateRGBHist(image, binX, binY, binZ)
             elif HistType == 1 :
                 hist = generateHSVHist(image, binX, binY, binZ)
             hist /= np.sum(hist)
+
         else :
             if HistType == 0 :
                 tmp = generateRGBHist(image, binX, binY, binZ)
@@ -87,26 +89,29 @@ def generateAMatrix(binX, binY, binZ):
             A[j,i] = A[i,j]
     return A
 
-def generateSample(k, binX, binY, binZ):
-    s = np.random.uniform(0,1,(binX * binY * binZ, k))
-    ss = np.sum(s, axis=0)
-    s = s / ss
-    return s
+def distcalc (u, v, A = generateAMatrix(18, 3, 3)) :
+    # A = np.load('Amatrix.npy')
+    diff = u - v
+    distance = np.dot(np.dot(diff,A),diff.transpose())
+    return distance.flatten()
 
-def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64, binX =18, binY =3, binZ =3, beta = 50):
+def generateFeature2(filename, time_length, segmentNum, framePerSegment, beta = 2, k = 64, binX =18, binY =3, binZ =3):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
         print ("could not open")
         return
-    
-    A = generateAMatrix(binX, binY, binZ)
-    sample = generateSample(k, binX, binY, binZ)
 
-    histSum = np.array([]).reshape(0,k)
-    # length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
-    
+    A = generateAMatrix(binX, binY, binZ)
+    # sample = generateSample(k, binX, binY, binZ)
+    sample = np.load('centers.npy')
+
+    # histSum = np.array([]).reshape(0,k)
+    histSum = []
     fps = vidcap.get(cv2.CAP_PROP_FPS)
-    length = int(time_length * fps)
+    if time_length == 0:
+        length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
+    else:
+        length = int(time_length * fps)
     if length > vidcap.get(cv2.CAP_PROP_FRAME_COUNT):
         length = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     if length < segmentNum:
@@ -118,7 +123,7 @@ def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64,
     spacing = segment_length / framePerSegment
     num = 1
 
-    hist = np.zeros((1, binX * binY * binZ))
+    hist = np.zeros(binX * binY * binZ)
     count = 0
     success,image = vidcap.read()
     dsum = []
@@ -128,15 +133,16 @@ def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64,
             hist = hist / framePerSegment
             feature = np.zeros((1, k))
             for i in range(k) :
-                diff = hist - sample[:,i]
-                distance = np.dot(np.dot(diff,A),diff.transpose())
-                dsum.append(distance)
+                distance = distcalc(hist, sample[i,:])
+                # diff = hist - sample[:,i]
+                # distance = np.dot(np.dot(diff,A),diff.transpose())
+                # dsum.append(distance)
                 feature[0,i] = math.exp(- beta * distance);
             feature = feature / np.sum(feature)
-            histSum = np.vstack((histSum, feature))
+            # histSum = np.vstack((histSum, feature))
+            histSum.append(feature)
 
             num = num + 1
-
             hist = generateHSVHist(image, binX, binY, binZ)
             hist = hist / np.sum(hist)
         else :
@@ -153,10 +159,15 @@ def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64,
     hist = hist / framePerSegment    
     feature = np.zeros((1, k))
     for i in range(k) :
-        diff = hist - sample[:,i]
-        distance = np.dot(np.dot(diff,A),diff.transpose())
-        dsum.append(distance)
+        distance = distcalc(hist, sample[i,:])
+        # diff = hist - sample[:,i]
+        # distance = np.dot(np.dot(diff,A),diff.transpose())
+        # dsum.append(distance)
         feature[0,i] = math.exp(- beta * distance);
     feature = feature / np.sum(feature)
-    histSum = np.vstack((histSum, feature))
-    return histSum
+
+    histSum.append(feature)
+    # np.savetxt('dsum.txt', dsum)
+
+    #histSum = np.vstack((histSum, feature))
+    return np.array(histSum, dtype=np.float64)
