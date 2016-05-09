@@ -18,7 +18,9 @@ requires = [
     'zope.sqlalchemy',
     'waitress',
     'librosa',
-    'sklearn'
+    'sklearn',
+    'pyclust',
+    'treelib'
     ]
 
 setup(name='e6735',
