@@ -1,6 +1,6 @@
 import librosa
 import numpy as np
-
+from numpy import linalg as LA
 
 # array([[  2.576e-03 -0.000e+00j,   4.327e-02 -0.000e+00j, ...,
 # 3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
@@ -39,11 +39,21 @@ def toFreqBin(audio, framerate, samplerate):
                 re[j, 4] += np.abs(D[i,j])
             else:
                 re[j, 5] += np.abs(D[i,j])
-
+    max = 1.0
+    for i in range(len(re)):
+        norm = LA.norm(re[i])
+        if(norm > max):
+            max = norm
+    re = re/max;
     return re
 
 
 def loadAudio(path):
-    return librosa.load(path)
+    from subprocess import call
+    r = call('ffmpeg -i "'+ path + '" -acodec pcm_u8 -ar 22050 "'+ path+ '.wav"', shell=True)
+    print ('done')
+    au, sr = librosa.load(path+ '.wav')
+    r = call('del "' + path + '.wav"', shell=True)
+    return au, sr
 
 

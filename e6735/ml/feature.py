@@ -151,6 +151,23 @@ def fileReadVi(filename):
     res = __flat(res)
     return res
 
+def fileReadAuMat(filename):
+    a, sr = au.loadAudio(filename)
+    res = auc.toFreqBin(a, clusterLinearModel.framerate, sr)
+    return res
+
+
+def fileReadViMat(filename):
+    res = vic.generateFeature(filename,
+                              math.ceil(
+                                  clusterLinearModel.length /
+                                  clusterLinearModel.framerate),
+                              clusterLinearModel.length,
+                              clusterLinearModel.frameperseg,
+                              clusterLinearModel.videoBin,
+                              clusterLinearModel.videoBin,
+                              clusterLinearModel.videoBin)
+    return res
 
 class clusterLinearModel:
     framerate = 10
