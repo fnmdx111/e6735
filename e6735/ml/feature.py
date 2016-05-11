@@ -188,6 +188,7 @@ class clusterLinearModel:
         self.a_inv_class_idx = set()
         self.v_inv_class_idx = set()
 
+        self.score_classifier = None
         self.gmm_n_threshold = 2
         # must smaller than dataset
 
@@ -217,7 +218,7 @@ class clusterLinearModel:
     def dump(self, pickle_fp):
         with open(pickle_fp, 'wb') as f:
             pickle.dump([self.audio_n_files, self.video_n_files,
-                         self.la, self.lv],
+                         self.la, self.lv, self.score_classifier],
                         f)
 
     def train(self, a_scores, audio_fps, v_scores, video_fps):
@@ -231,7 +232,7 @@ class clusterLinearModel:
 
         scores = a_scores + v_scores
 
-        score_classifier = gmmScores(scores, self.gmm_n_threshold)
+        self.score_classifier = gmmScores(scores, self.gmm_n_threshold)
 
         if self.n_multiprocess == 0:
             t1 = time.perf_counter()
@@ -253,7 +254,7 @@ class clusterLinearModel:
 
         a_ret = []
         if len(audio_fps) > 2:
-            a_pscores, self.la = trainFeaturesLogistic(score_classifier,
+            a_pscores, self.la = trainFeaturesLogistic(self.score_classifier,
                                                        a_feats,
                                                        a_scores)
             self.a_inv_class_idx = set(map(int, a_pscores))
@@ -265,7 +266,7 @@ class clusterLinearModel:
 
         v_ret = []
         if len(video_fps) > 2:
-            v_pscores, self.lv = trainFeaturesLogistic(score_classifier,
+            v_pscores, self.lv = trainFeaturesLogistic(self.score_classifier,
                                                        v_feats,
                                                        v_scores)
             self.v_inv_class_idx = set(map(int, v_pscores))
