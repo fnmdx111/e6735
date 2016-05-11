@@ -38,9 +38,9 @@ layer {
   }
   convolution_param {
     num_output: 20
-    kernel_w: 2
-    kernel_h: 6
+    kernel_w: 5
     stride_w: 1
+    kernel_h: 1
     stride_h: 1
     weight_filler {
       type: "xavier"
@@ -58,9 +58,9 @@ layer {
   pooling_param {
     pool: MAX
     kernel_w: 2
-    stride_w: 1
-    kernel_h: 5
-    stride_h: 3
+    stride_w: 2
+    kernel_h: 1
+    stride_h: 1
   }
 }
 layer {
@@ -76,9 +76,9 @@ layer {
   }
   convolution_param {
     num_output: 50
-    kernel_w: 2
+    kernel_w: 5
     stride_w: 1
-    kernel_h: 6
+    kernel_h: 1
     stride_h: 1
     weight_filler {
       type: "xavier"
@@ -96,9 +96,9 @@ layer {
   pooling_param {
     pool: MAX
     kernel_w: 2
-    stride_w: 1
-    kernel_h: 5
-    stride_h: 3
+    stride_w: 2
+    kernel_h: 1
+    stride_h: 1
   }
 }
 layer {

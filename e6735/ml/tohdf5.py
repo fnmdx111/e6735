@@ -6,16 +6,20 @@ solverlocation = "D:\\CG\\e6735\\e6735\\ml\\solver.prototxt"
 modellocation = "D:\\CG\\e6735\\e6735\ml\\lenet_train_test.prototxt"
 def h5pyout(features, labels, path):
     s = np.shape(features)
-    features = np.reshape(features, (s[0], 1, s[1], s[2]))
+    nfeatures = np.zeros((s[0], s[2], 1, s[1]))
+    for i in range(s[0]):
+        for j in range(s[2]):
+            for k in range(s[1]):
+                nfeatures[i][j][0][k] = features[i][k][j]
     print(np.shape(features))
     s = np.shape(labels)
     labels = np.reshape(labels, (s[0], 1, 1, s[1]))
     f = h5py.File(path, 'w')
-    f.create_dataset('data',np.shape(features), dtype='f8')
+    f.create_dataset('data',np.shape(nfeatures), dtype='f8')
     f.create_dataset('label', np.shape(labels), dtype='f8')
 
-    for i in range(len(features)):
-        f['data'][i] = features[i]
+    for i in range(len(nfeatures)):
+        f['data'][i] = nfeatures[i]
         f['label'][i] = labels[i]
     f.close()
 
@@ -51,4 +55,4 @@ def getScore(trainedModelPath, labelShape):
 # labels.append([1, 1, 1, 1, 0, 0, 0, 0])
 # print(np.shape(features))
 # h5pyout(features, labels, "F:\\h5fs")
-
+trainFirstTime()
