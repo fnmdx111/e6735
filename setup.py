@@ -20,7 +20,9 @@ requires = [
     'librosa',
     'sklearn',
     'pyclust',
-    'treelib'
+    'treelib',
+    'pyclust',
+    'h5py'
     ]
 
 setup(name='e6735',
