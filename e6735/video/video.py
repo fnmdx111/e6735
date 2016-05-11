@@ -95,7 +95,7 @@ def distcalc (u, v, A = generateAMatrix(18, 3, 3)) :
     distance = np.dot(np.dot(diff,A),diff.transpose())
     return distance.flatten()
 
-def generateFeature2(filename, time_length, segmentNum, framePerSegment, beta = 2, k = 64, binX =18, binY =3, binZ =3):
+def generateFeature2(filename, time_length, segmentNum, framePerSegment, k = 64, beta = 3, binX =18, binY =3, binZ =3):
     vidcap = cv2.VideoCapture(filename)
     if not vidcap.isOpened(): 
         print ("could not open")
