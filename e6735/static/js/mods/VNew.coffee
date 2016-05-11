@@ -2,39 +2,31 @@ $ = require 'jquery'
 React = require 'react'
 ReactDOM = require 'react-dom'
 videojs = require 'video.js'
+shortid = require 'shortid'
 
 Uploader = React.createFactory(require './Uploader')
+ScoreVector = React.createFactory(require './ScoreVector')
 AbstractView = require './AbstractView'
 
-[_span, _input, _btn, _img, _h2, _hr, _div, _p, _video, _audio, _source,
- _h4, _h5] =\
-  (React.createFactory(name) for name in\
-  ['span', 'input', 'button', 'img', 'h2', 'hr', 'div', 'p', 'video', 'audio',
-   'source', 'h4', 'h5'])
+E = require './Els'
 
 SimplePanel = React.createFactory(require './SimplePanel')
 
 preview_video = null
 
-slider = React.createClass
-  render: ->
-    _div {className: 'col-md-6'},
-      SimplePanel {title: @props.caption},
-        _input {id: this.props.id, type: 'range', className: 'sliderbar'}
+UPLOAD_URL = 'upload'
 
-slider = React.createFactory slider
-
-new_view = React.createClass
+new_view_item = React.createClass
   render: ->
     $$p = this.props
     $$s = this.state ? {}
 
-    __id = 'preview-widget'
+    __id = "preview-widget-#{$$p.id}"
 
     pv = if $$s.type?.match /video/
-      _div {
+      E.div {
         id: __id
-        ref: 'target'
+        ref: "target-#{$$p.id}"
         className: "embed-responsive embed-responsive-16by9 mm-container"
       }
       # Because video.js is not very compatible with react.js, we are going to
@@ -45,85 +37,67 @@ new_view = React.createClass
         className: 'embed-responsive-item'
         controls: true
         preload: 'auto'
-        id: 'audio-preview'
+        id: "audio-preview-#{$$p.id}"
 
-      _div {
+      E.div {
         id: __id
         className: "embed-responsive embed-responsive-16by9 mm-container"
       },
-        _audio audio_properties,
-          _source {src: $$s.fp, type: $$s.type}
+        E.audio audio_properties,
+          E.source {src: $$s.fp, type: $$s.type}
       # Audio tags are native HTML5 elements, work well with react.js
     else
-      _div {}
+      E.div {}
       # No preview
 
-    preview = SimplePanel {id: 'preview', title: "Preview"}, pv
+    preview = SimplePanel {id: "preview-#{$$p.id}", title: "Preview"}, pv
 
-    sliders = (slider {key: id, id: 'dim' + id, caption: cap} for id, cap of {
-      1: 'Psychedelic'
-      2: 'Vibrant'
-      3: 'Happy'
-      4: 'Adorable'
-      5: 'Gloomy'
-      6: 'Energetic'
-      7: 'Romantic'
-      8: 'Violent'
-    })
-    sliders_row = _div {className: "row"},
-      sliders
-
-    _div {},
-      _div {className: 'page-header'},
-        _h2 {}, "How do you like your stuff?"
-      Uploader {
-        url: $$p.url
-        evt_hnds: $$p.evt_hnds
-        auto_upload: false
-      }
-      _hr {className: 'vnew'}
-      _div {className: "row"},
-        _div {className: "col-md-8"},
-          preview
-        _div {className: "col-md-4"},
-          sliders_row
-      _div {className: "input-group"},
-        _input {
-          type: "text"
-          className: "form-control"
-          placeholder: "Title"
-          id: "title-input"
-          ariaDescribedby: "addon-by"
-        }
-        _span {className: "input-group-addon", id: "addon-by"},
-          "by"
-        _input {
-          type: "text"
-          className: "form-control"
-          placeholder: "Artist"
-          id: "artist-input"
-          ariaDescribedby: "addon-by"
-        }
-        _span {className: "input-group-btn"},
-          _btn {
-            type: "button"
-            className: "btn btn-primary pull-right"
-            id: "submit"
-          }, "Submit"
+    E.div {id: "new-item-#{$$p.id}", className: "panel panel-default"},
+      E.div {className: ""},
+        E.div {className: "mm-container"},
+          Uploader {
+            url: $$p.url
+            evt_hnds: $$p.evt_hnds
+            auto_upload: false
+          }
+          E.hr {className: 'vnew'}
+          E.div {className: "row"},
+            E.div {className: "col-md-8"},
+              preview
+            ScoreVector {col: 4, id: $$p.id}
+          E.div {className: "input-group"},
+            E.input {
+              type: "text"
+              className: "form-control"
+              placeholder: "Title"
+              id: "title-input-#{$$p.id}"
+              ariaDescribedby: "addon-by"
+            }
+            E.span {className: "input-group-addon", id: "addon-by-#{$$p.id}"},
+              "by"
+            E.input {
+              type: "text"
+              className: "form-control"
+              placeholder: "Artist"
+              id: "artist-input-#{$$p.id}"
+              ariaDescribedby: "addon-by"
+            }
 
   componentDidUpdate: ->
     $$s = @state ? {}
+    $$p = @props
     if $$s.type?.match /video/
       wrapper = document.createElement 'div'
       wrapper.innerHTML = """<video
-  id='video-preview'
+  id="video-preview-#{$$p.id}"
   class='video-js vjs-default-skin embed-responsive-item'
   preload='auto' controls height='322' width='640'>
   <source src='#{$$s.fp}' type='#{$$s.type}' />
 </video>"""
 
       v = wrapper.firstChild
-      @refs.target.appendChild(v)
+      $("#video-preview-#{$$p.id}").remove()
+      @refs["target-#{@props.id}"].appendChild(v)
       videojs v, {}, ->
         preview_video = this
 
@@ -136,64 +110,112 @@ new_view = React.createClass
     true
 
 
+new_view = React.createClass
+  render: ->
+    @state = {items: [], dzs: {}} if not @state?
+
+    E.div {id: "new-view"},
+          E.div {},
+                E.h2 {}, "How do you like your stuffs?"
+          E.div {id: "new-item-anchor"},
+                @state.items
+          E.div {className: "btn-group pull-right", role: "group"},
+             E.btn {
+               className: "btn btn-primary"
+               id: "submit"
+             }, "Submit"
+             E.btn {
+               id: "add-item"
+               className: "btn btn-info"
+             }, "+"
+  componentDidMount: ->
+    me = this
+    me.state = {items: [], dzs: {}} unless me.state?
+
+    build_new_item = ->
+      el = [null]
+      evt_hnds = {
+        addedfile: (file) =>
+          el[0].setState
+            type: file.type
+            fp: window.URL.createObjectURL file
+        init: (dz) =>
+          dzs = me.state.dzs
+          dzs[el[0].props.id] = dz
+          me.setState {dzs: dzs}
+      }
+
+      __id = shortid.generate()
+      el[0] = React.createElement new_view_item, {
+        url: UPLOAD_URL
+        evt_hnds: evt_hnds
+        id: __id
+        key: __id
+        ref: (x) -> el[0] = x
+      }
+      el[0]
+
+    $('#add-item').on 'click', ->
+      if me.state
+        items = me.state.items
+      else
+        items = []
+
+      n_item = build_new_item()
+      items.push n_item
+      me.setState({items: items})
+
+    $('#submit').on 'click', ->
+      $('.waiting').removeClass 'invisible'
+      each = (item, id, data) ->
+        title = $("#title-input-#{item.props.id}").val()
+        artist = $("#artist-input-#{item.props.id}").val()
+
+        if title == ""
+          alert "Title cannot be empty!"
+          $('.waiting').addClass 'invisible'
+          return
+        if artist == ""
+          alert "Artist cannot be empty!"
+          $('.waiting').addClass 'invisible'
+          return
+
+        data.append "file#{id}", me.state.dzs[item.props.id].files[0]
+        data.append "dims#{id}",
+                    ($("#dim-#{item.props.id}-#{id}").val() / 100.0 for id in [1..8])
+        data.append "title#{id}", title
+        data.append "artist#{id}", artist
+
+      data = new FormData()
+      for item, i in me.state.items
+        each item, i, data
+
+      $.ajax {
+               url: me.props.url
+               data: data
+               processData: false
+               contentType: false
+               type: "POST"
+               success: (data) =>
+                 $('.waiting').addClass 'invisible'
+                 switch data.status
+                   when 'failed'
+                     alert "Upload failed! Reason: #{data.reason}."
+                   when 'successful'
+                     alert 'Upload successful!'
+                     @hide()
+                     @render()
+               error: =>
+                 $('.waiting').addClass 'invisible'
+             }
+
 module.exports = class VNew extends AbstractView
   constructor: (@url='/upload', anchor_id='upload') ->
     super '#' + anchor_id, anchor_id
 
-    @evt_hnds = {
-      addedfile: (file) =>
-        @ra_el.setState {
-          type: file.type
-          fp: window.URL.createObjectURL file
-        }
-
-      init: (dz) =>
-        $('#submit').on 'click', =>
-          $('.waiting').removeClass 'invisible'
-
-          title = $('#title-input').val()
-          artist = $('#artist-input').val()
-
-          if title == ""
-            alert "Title cannot be empty!"
-            $('.waiting').addClass 'invisible'
-            return
-          if artist == ""
-            alert "Artist cannot be empty!"
-            $('.waiting').addClass 'invisible'
-            return
-
-          data = new FormData()
-          data.append 'file', dz.files[0]
-          data.append 'dims', ($('#dim' + id).val() / 100.0 for id in [1..8])
-          data.append 'title', title
-          data.append 'artist', artist
-
-          $.ajax {
-            url: @url
-            data: data
-            processData: false
-            contentType: false
-            type: "POST"
-            success: (data) =>
-              $('.waiting').addClass 'invisible'
-
-              switch data.status
-                when 'failed'
-                  alert "Upload failed! Reason: #{data.reason}."
-                when 'successful'
-                  alert 'Upload successful!'
-                  @hide()
-                  @render()
-            error: =>
-              $('.waiting').addClass 'invisible'
-          }
-    }
-
   render: ->
     super()
 
-    @ra_el = ReactDOM.render React.createElement(new_view, {
-      url: @url
-      evt_hnds: @evt_hnds
-    }), @anchor
+    try ReactDOM.unmountComponentAtNode @anchor?
+    el = React.createElement(new_view, {url: '/upload'})
+    ReactDOM.render el, @anchor
