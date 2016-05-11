@@ -28,5 +28,6 @@
 </div>
 
 <script src="${request.static_url('e6735:static/js/bundled-app.min.js')}"></script>
+
 </body>
 </html>

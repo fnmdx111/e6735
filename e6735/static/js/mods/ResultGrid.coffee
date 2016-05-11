@@ -2,8 +2,7 @@ shortid = require 'shortid'
 $ = require 'jquery'
 React = require 'react'
 ReactDOM = require 'react-dom'
-[_h5, _div, _p, _video, _source, _audio, _h4] = (React.createFactory(name)\
-  for name in ['h5', 'div', 'p', 'video', 'source', 'audio', 'h4'])
+E = require './Els'
 videojs = require 'video.js'
 AbstractView = require './AbstractView'
 SimplePanel = React.createFactory(require './SimplePanel')
@@ -29,28 +28,28 @@ cls = React.createClass
     tag = switch
       when $$p.confidence < 0.333 then 'default'
       when $$p.confidence < 0.666 then 'warning'
-      else 'danger'
+      else 'success'
 
     views = switch $$p.query_type
       when 'heterogeneous'
-        [_video video_properties,
-           _source {src: $$p.video_fp, type: $$p.video_type},
-         _audio audio_properties,
-           _source {src: $$p.audio_fp, type: $$p.audio_type}]
+        [E.video video_properties,
+           E.source {src: $$p.video_fp, type: $$p.video_type},
+         E.audio audio_properties,
+           E.source {src: $$p.audio_fp, type: $$p.audio_type}]
       when /video/
-        _video video_properties,
-          _source {src: $$p.video_fp, type: $$p.video_type}
+        E.video video_properties,
+          E.source {src: $$p.video_fp, type: $$p.video_type}
       when /audio/
-        _audio audio_properties,
-          _source {src: $$p.audio_fp, type: $$p.audio_type}
+        E.audio audio_properties,
+          E.source {src: $$p.audio_fp, type: $$p.audio_type}
 
-    _div {className: 'col-md-6', key: shortid.generate()},
+    E.div {className: 'col-md-6', key: shortid.generate()},
       SimplePanel {
         class_name: tag
         title: "#{$$p.title} by #{$$p.artist}"
       },
-        _h5 {}, "confidence: #{$$p.confidence}"
-        _div {className: 'embed-responsive embed-responsive-16by9 mm-container'},
+        E.h5 {}, "confidence: #{$$p.confidence}"
+        E.div {className: 'embed-responsive embed-responsive-16by9 mm-container'},
           views
 
   componentDidMount: ->
@@ -110,20 +109,19 @@ class ResultGridInfoItem
 
 grid_cls = React.createClass
   render: ->
-    _div {className: 'row'},
+    E.div {className: 'row'},
       (info.el for info in @props.items)
 
 
 module.exports = class ResultGrid extends AbstractView
-  constructor: (id, @query_type="heterogeneous") ->
+  constructor: (id) ->
     super '.query-result', id
 
-  render: (response, uploaded_file) ->
+  render: (response, uploaded_file, @query_type) ->
     # refresh_refs()
     super()
 
     rscp = (fp) -> response.resource_path + fp
-
 
     @query_type = uploaded_file.type if @query_type != "heterogeneous"
 

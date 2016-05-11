@@ -1,33 +1,33 @@
-$ = require 'jquery'
+jQuery = require 'jquery'
+$ = jQuery
 
 React = require 'react'
 ReactDOM = require 'react-dom'
 
 ___css = require './lib-reqs.css'
 
-[_btn, _img, _h2, _hr, _div, _p, _video] = (React.createFactory(name) for name in\
-  ['button', 'img', 'h2', 'hr', 'div', 'p', 'video'])
+E = require './mods/Els'
 
 VQuery = require './mods/VQuery'
 VNew = require './mods/VNew'
 
 app_view = React.createClass
   render: ->
-    _div {},
-      _div {id: "query-view"},
-        _btn {
+    E.div {},
+      E.div {id: "query-view"},
+        E.btn {
           id: "to-uv-btn"
           className: "btn btn-info top-right"
           type: "button"
         }, "Upload something new"
-        _div {id: "query"}
-      _div {id: "upload-view"},
-        _btn {
+        E.div {id: "query"}
+      E.div {id: "upload-view"},
+        E.btn {
           id: "to-qv-btn"
           className: "btn btn-info top-right"
           type: "query"
         }, "Query"
-        _div {id: "upload"}
+        E.div {id: "upload"}
 
   componentDidMount: ->
     $$p = this.props

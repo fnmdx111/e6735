@@ -1,4 +1,4 @@
-import video
+from . import video
 import numpy as np
 import pyclust
 import os
@@ -33,4 +33,3 @@ def histClustering(k = 64):
     #sample = generateSample(k, binX, binY, binZ)
     #np.save('cluster.npy',sample)
 
-    
