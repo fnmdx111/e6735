@@ -1,10 +1,15 @@
 import h5py
 import numpy as np
 from subprocess import call
+import os
+
+
 h5path = r'F:\h5fs'
 caffelocation = r"D:\CG\caffe-windows\Build\x64\Release\caffe"
 solverlocation = "D:\\CG\\e6735\\e6735\\ml\\solver.prototxt"
 modellocation = "D:\\CG\\e6735\\e6735\ml\\lenet_train_test.prototxt"
+
+
 def h5pyout(features, labels):
     path = h5path
 
@@ -22,15 +27,27 @@ def h5pyout(features, labels):
         f['label'][i] = labels[i]
     f.close()
 
+
 def clean():
     r = call("del f:\\labelout*", shell=True)
 
+
 def trainFirstTime():
     r = call(caffelocation +" train -solver " + solverlocation, shell=True)
+
+
 def train(modelpath):
-    r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
+    if os.path.exists(modelpath):
+        r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
+    else:
+        trainFirstTime()
+        saveModel(modelpath)
+
+
 def saveModel(path):
     r = call("move f:\\lenet_iter_2000.caffemodel " + path, shell=True)
+
+
 def getScore(trainedModelPath, labelShape):
     r = call(caffelocation + " test -solver " + solverlocation + " -weights " + trainedModelPath,
              shell=True)
@@ -39,6 +56,7 @@ def getScore(trainedModelPath, labelShape):
     f.close()
     clean()
     return re
+
 # from e6735.audio import audioAna as au
 # a,sr = au.loadAudio("F:\\MUSIC\\Dabin,Bijou - Awakening(Original Mix).mp3")
 # fbin = au.toFreqBin(a, 10, sr)
