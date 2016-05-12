@@ -1,10 +1,13 @@
 import h5py
 import numpy as np
 from subprocess import call
-caffelocation = "D:\\CG\\caffe-windows\\Build\\x64\\Release\\caffe"
+h5path = r'F:\h5fs'
+caffelocation = r"D:\CG\caffe-windows\Build\x64\Release\caffe"
 solverlocation = "D:\\CG\\e6735\\e6735\\ml\\solver.prototxt"
 modellocation = "D:\\CG\\e6735\\e6735\ml\\lenet_train_test.prototxt"
-def h5pyout(features, labels, path):
+def h5pyout(features, labels):
+    path = h5path
+
     s = np.shape(features)
     features = np.reshape(features, (s[0], 1, s[1], s[2]))
     print(np.shape(features))
@@ -50,5 +53,5 @@ def getScore(trainedModelPath, labelShape):
 # labels.append([0, 0,0,0 ,1,1,1,1])
 # labels.append([1, 1, 1, 1, 0, 0, 0, 0])
 # print(np.shape(features))
-# h5pyout(features, labels, "F:\\h5fs")
+# h5pyout(features, labels, "")
 
