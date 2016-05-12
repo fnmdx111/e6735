@@ -65,8 +65,8 @@ def main(global_config, **settings):
 
     config.add_route('home', '/')
     config.add_route('upload', '/upload')
-    config.add_route('htg-query', '/htg-query')
-    config.add_route('hmg-query', '/hmg-query')
+    config.add_route('htgq', '/htgq')
+    config.add_route('hmgq', '/hmgq')
     config.scan()
 
     ml_path = config.registry.settings['persistence.ml']
