@@ -1,9 +1,7 @@
 import os
-import threading
 
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
 from e6735.ml import ClusterLinearModel
 from e6735.models import Audio, Video
@@ -24,6 +22,7 @@ def mmfp(mm):
                         'videos' if isinstance(mm, Video) else 'audios',
                         mm.filename())
 
+
 def db(request):
     session = request.registry.dbmaker()
 
@@ -37,12 +36,6 @@ def db(request):
     request.add_finished_callback(cleanup)
 
     return session
-
-
-def refit_model(registry):
-    db = registry.dbmaker()
-
-    lreg_train.train(db, mmfp=mmfp, clm=registry.mln)
 
 
 def main(global_config, **settings):
