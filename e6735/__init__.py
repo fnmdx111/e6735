@@ -60,6 +60,7 @@ def main(global_config, **settings):
     config.add_route('upload', '/upload')
     config.add_route('htgq', '/htgq')
     config.add_route('hmgq', '/hmgq')
+    config.add_route('sos', '/sos')
     config.scan()
 
     ml_path = config.registry.settings['persistence.ml']

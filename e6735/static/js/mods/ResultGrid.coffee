@@ -157,10 +157,12 @@ module.exports = class ResultGrid extends AbstractView
     else if query_type == 'scores'
       items = for r in response.result
         if r.type == 'audio'
-          new ResultGridInfoItem(r.title, r.artist, rscp(r.filename), '',
+          new ResultGridInfoItem(r.title, r.artist,
+            response.resource_path + '/audios/' + r.filename, '',
             shortid.generate(), '', '', r.confidence, 'audio')
         else
-          new ResultGridInfoItem(r.title, r.artist, '', rscp(r.filename),
+          new ResultGridInfoItem(r.title, r.artist, '',
+            response.resource_path + '/videos/' + r.filename,
             shortid.generate(), '', '', r.confidence, 'video')
 
     try ReactDOM.unmountComponentAtNode @anchor?
