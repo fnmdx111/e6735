@@ -14,7 +14,6 @@ from e6735.models import (
     DBSession,
     Base,
     )
-from e6735.scripts import lreg_train
 
 abs_sys_path = os.getcwd()
 
