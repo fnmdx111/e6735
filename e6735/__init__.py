@@ -18,6 +18,7 @@ from e6735.scripts import lreg_train
 
 abs_sys_path = os.getcwd()
 
+
 def mmfp(mm):
     return os.path.join(abs_sys_path,
                         'e6735', 'resources',
@@ -57,10 +58,6 @@ def main(global_config, **settings):
     config.registry.dbmaker = scoped_session(sessionmaker(bind=engine))
     config.add_request_method(db, reify=True)
 
-    def refit(request):
-        return refit_model(request.registry)
-    config.registry.refit = refit
-
     config.include('pyramid_chameleon')
 
     config.add_static_view('static', 'static', cache_max_age=3600)
@@ -74,7 +71,7 @@ def main(global_config, **settings):
     config.scan()
 
     ml_path = config.registry.settings['persistence.ml']
-    config.registry.mln = ClusterLinearModel.from_pickle(ml_path)
+    config.registry.ml_path = ml_path
 
     # threading.Thread(target=refit_model, daemon=True).start()
 
