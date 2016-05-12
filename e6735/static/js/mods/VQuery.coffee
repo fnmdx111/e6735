@@ -81,7 +81,7 @@ query_view = React.createClass
             when 'failed'
               alert "Search failed! Reason: #{data.reason}."
             when 'successful'
-              @grid.render data.data, null, 'scores'
+              @grid.render data.data, null
         error: =>
           @grid.hide()
           $('.waiting').addClass 'invisible'
@@ -111,11 +111,7 @@ module.exports = class VQuery extends AbstractView
     }
 
     @evts1 = $.extend(true, {}, @evt_hnds)
-    @evts1.success = (file, response) =>
-      @grid.render response, file, 'heterogeneous'
     @evts2 = $.extend(true, {}, @evt_hnds)
-    @evts2.success = (file, response) =>
-      @grid.render response, file, 'homogeneous'
 
   render: ->
     super()
