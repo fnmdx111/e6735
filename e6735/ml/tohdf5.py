@@ -1,8 +1,11 @@
+import threading
+
 import h5py
 import numpy as np
 from subprocess import call
 import os
 
+lock = threading.Lock()
 
 h5path = r'F:\h5fs'
 caffelocation = r"D:\CG\caffe-windows\Build\x64\Release\caffe"
@@ -41,11 +44,12 @@ def trainFirstTime():
 
 
 def train(modelpath):
-    if os.path.exists(modelpath):
-        r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
-    else:
-        trainFirstTime()
-        saveModel(modelpath)
+    with lock:
+        if os.path.exists(modelpath):
+            r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
+        else:
+            trainFirstTime()
+            saveModel(modelpath)
 
 
 def saveModel(path):
@@ -53,12 +57,13 @@ def saveModel(path):
 
 
 def getScore(trainedModelPath, labelShape):
-    print(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath)
-    r = call(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath,
-             shell=True)
-    f = h5py.File("f:\\labelout49", 'r')
-    re =  np.reshape(f["data"][0], labelShape)
-    f.close()
-    clean()
-    return re
+    with lock:
+        print(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath)
+        r = call(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath,
+                 shell=True)
+        f = h5py.File("f:\\labelout49", 'r')
+        re =  np.reshape(f["data"][0], labelShape)
+        f.close()
+        clean()
+        return re
 

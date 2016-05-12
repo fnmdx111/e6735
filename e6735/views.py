@@ -25,10 +25,11 @@ def home(request):
 
 @view_config(route_name='upload', renderer='json')
 def upload_new(request):
-    N = request.POST['n']
+    N = int(request.POST['n'])
     L.info('Received %d upload multimedia files.', N)
 
-    objs = []
+    a_objs = []
+    v_objs = []
     for i in range(N):
         fsrc = request.POST['file%d' % i]
         title = request.POST['title%d' % i]
@@ -66,13 +67,13 @@ def upload_new(request):
             L.info('Trying to add %s.', fullname)
             request.db.add(obj)
 
-            objs.append(obj)
+            (v_objs if ext == 'mp4' else a_objs).append(obj)
         else:
             obj = cursor.first()
             L.info('Updated the score of old object %s.', fullname)
             obj.score = tuple(map(lambda xs: sum(xs) / 2,
                                   zip(obj.score, dims)))
-            objs.append(obj)
+            (v_objs if ext == 'mp4' else a_objs).append(obj)
 
         try:
             request.db.commit()
@@ -83,15 +84,27 @@ def upload_new(request):
             return {'status': 'failed',
                     'reason': 'database error'}
 
-    feats = []
-    scores = []
-    for f in objs:
-        feats.append(f.feat)
-        scores.append(f.score)
+    if a_objs:
+        a_feats = []
+        a_scores = []
+        for f in a_objs:
+            a_feats.append(f.feat)
+            a_scores.append(f.score)
 
-    h5pyout(np.array(feats),
-            np.array(scores))
-    train(request.registry.ml_path)
+        h5pyout(np.array(a_feats),
+                np.array(a_scores))
+        train(request.registry.ml_path + '.a')
+
+    if v_objs:
+        v_feats = []
+        v_scores = []
+        for f in v_objs:
+            v_feats.append(f.feat)
+            v_scores.append(f.score)
+
+        h5pyout(np.array(v_feats),
+                np.array(v_scores))
+        train(request.registry.ml_path + '.v')
 
     return {'status': 'successful'}
 
@@ -101,11 +114,15 @@ def query_similar_multimedia_files(req, fp, req_type, res_type):
 
     req_feat = (feat_mod.fileReadAuMat if req_type == 'audio' else
                 feat_mod.fileReadViMat)(fp)
-    req_feat.reshape((1, *req_feat.shape))
+    req_feat = req_feat.reshape((1, *req_feat.shape))
 
     h5pyout(req_feat, np.zeros((1, 8)))
-    score = getScore(req.registry.ml_path, (1, 8))
+    if req_type == 'audio':
+        score = getScore(req.registry.ml_path + '.a', (1, 8))
+    else:
+        score = getScore(req.registry.ml_path + '.v', (1, 8))
 
+    score = tuple(score.reshape(8))
     res_table = Audio if res_type == 'audio' else Video
     ret = []
     for obj in db.query(res_table).all():
@@ -128,20 +145,23 @@ def heterogeneous_query(request):
     fn, f = open_request_file(request)
     ext = fn.rsplit('.', maxsplit=1)[1]
 
-    with NamedTemporaryFile(suffix='.' + ext) as tmpf:
-        shutil.copyfileobj(f, tmpf)
+    tmpf = NamedTemporaryFile(suffix='.' + ext, delete=False)
 
-        req_type = 'video' if fn.endswith('mp4') else 'audio'
-        res_type = 'audio' if req_type == 'video' else 'audio'
-        results = query_similar_multimedia_files(request.db,
-                                                 tmpf.name,
-                                                 req_type, res_type)
+    shutil.copyfileobj(f, tmpf)
+    tmpf.close()
 
-        return {'result': results, 'status': 'ok',
-                'resource_path': request
-                    .static_url('e6735:resources/%ss/' % res_type),
-                'result_type': res_type,
-                'query_type': 'heterogeneous'}
+    req_type = 'video' if fn.endswith('mp4') else 'audio'
+    res_type = 'audio' if req_type == 'video' else 'audio'
+    results = query_similar_multimedia_files(request,
+                                             tmpf.name,
+                                             req_type, res_type)
+    os.remove(tmpf.name)
+
+    return {'result': results, 'status': 'ok',
+            'resource_path': request
+                .static_url('e6735:resources/%ss/' % res_type),
+            'result_type': res_type,
+            'query_type': 'heterogeneous'}
 
 
 @view_config(route_name='hmgq', renderer='json')
@@ -149,23 +169,26 @@ def homogeneous_query(request):
     fn, f = open_request_file(request)
     ext = fn.rsplit('.', maxsplit=1)[1]
 
-    with NamedTemporaryFile(suffix='.' + ext) as tmpf:
-        shutil.copyfileobj(f, tmpf)
+    tmpf = NamedTemporaryFile(suffix='.' + ext, delete=False)
+    shutil.copyfileobj(f, tmpf)
+    tmpf.close()
 
-        req_type = 'video' if fn.endswith('mp4') else 'audio'
-        res_type = 'video' if req_type == 'video' else 'audio'
-        results = query_similar_multimedia_files(request.db,
-                                                 tmpf.name,
-                                                 req_type,
-                                                 res_type)
+    req_type = 'video' if fn.endswith('mp4') else 'audio'
+    res_type = 'video' if req_type == 'video' else 'audio'
+    results = query_similar_multimedia_files(request,
+                                             tmpf.name,
+                                             req_type,
+                                             res_type)
 
-        return {
-            'result': results, 'status': 'ok',
-            'resource_path': request
-                .static_url('e6735:resources/%ss/' % res_type),
-            'type': res_type,
-            'query_type': 'homogeneous'
-        }
+    os.remove(tmpf.name)
+
+    return {
+        'result': results, 'status': 'ok',
+        'resource_path': request
+            .static_url('e6735:resources/%ss/' % res_type),
+        'result_type': res_type,
+        'query_type': 'homogeneous'
+    }
 
 
 conn_err_msg = """\

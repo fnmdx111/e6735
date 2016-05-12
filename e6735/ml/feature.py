@@ -9,7 +9,7 @@ from sklearn import mixture, linear_model, decomposition
 from scipy import optimize
 import pickle
 # from e6735.audio import audioAna as auc
-# from e6735.audio import audio_feat as auc
+from e6735.audio import audio_feat as auc
 # from e6735.video import video_feat as vic
 from e6735.video import video as vic
 
