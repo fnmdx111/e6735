@@ -31,7 +31,7 @@ class MultimediaMixin:
     title = Column(Text)
     artist = Column(Text)
     length = Column(SmallInteger)
-    canonical_repr = Column(PickleType)
+    feat = Column(PickleType)
     score = Column(PickleType)
     ext = Column(Text)
 
@@ -48,7 +48,8 @@ class MultimediaMixin:
             'artist': self.artist,
             'length': self.length,
             'filename': self.filename(),
-            'confidence': self.confidence
+            'confidence': self.confidence,
+            'type': self.type_
         }
 
 
@@ -57,7 +58,9 @@ class Video(MultimediaMixin, Base):
     width = Column(SmallInteger)
     height = Column(SmallInteger)
 
-    def __init__(self, title, artist, width, height, length=0, ext='mp4'):
+    type_ = 'video'
+
+    def __init__(self, title, artist, width=0, height=0, length=0, ext='mp4'):
         self.title = title
         self.artist = artist
         self.length = length
@@ -68,6 +71,8 @@ class Video(MultimediaMixin, Base):
 
 
 class Audio(MultimediaMixin, Base):
+
+    type_ = 'audio'
 
     def __init__(self, title, artist, ext='mp3', length=0):
         self.title = title

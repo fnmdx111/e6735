@@ -117,25 +117,49 @@ module.exports = class ResultGrid extends AbstractView
   constructor: (id) ->
     super '.query-result', id
 
-  render: (response, uploaded_file, @query_type) ->
+  render: (response, uploaded_file) ->
     # refresh_refs()
     super()
 
     rscp = (fp) -> response.resource_path + fp
 
-    @query_type = uploaded_file.type if @query_type != "heterogeneous"
+    query_type = response.query_type
+    result_type = response.result_type
 
-    if response.type == 'audio'
+    if result_type == 'audio' and query_type == 'heterogeneous'
+      # Uploaded file is a video clip
       items = for r in response.result
         new ResultGridInfoItem r.title, r.artist, rscp(r.filename),
           window.URL.createObjectURL(uploaded_file), shortid.generate(),
-          '', uploaded_file.type, r.confidence, @query_type
+          '', uploaded_file.type, r.confidence, 'heterogeneous'
 
-    else
+    else if result_type == 'audio' and query_type == 'homogeneous'
+      # Uploaded file is an audio clip
+      items = for r in response.result
+        new ResultGridInfoItem(r.title, r.artist, rscp(r.filename),
+          '', shortid.generate(), '', '', r.confidence, 'audio')
+
+    else if result_type == 'video' and query_type == 'heterogeneous'
+      # Uploaded file is an audio clip
       items = for r in response.result
         new ResultGridInfoItem r.title, r.artist,
           window.URL.createObjectURL(uploaded_file), rscp(r.filename),
-          shortid.generate(), uploaded_file.type, '', r.confidence, @query_type
+          shortid.generate(), uploaded_file.type, '',
+          r.confidence, 'heterogeneous'
+
+    else if result_type == 'video' and query_type == 'homogeneous'
+      items = for r in response.result
+        new ResultGridInfoItem(r.title, r.artist, '', rscp(r.filename),
+          shortid.generate(), '', '', r.confidence, 'video')
+
+    else if query_type == 'scores'
+      items = for r in response.result
+        if r.type == 'audio'
+          new ResultGridInfoItem(r.title, r.artist, rscp(r.filename), '',
+            shortid.generate(), '', '', r.confidence, 'audio')
+        else
+          new ResultGridInfoItem(r.title, r.artist, '', rscp(r.filename),
+            shortid.generate(), '', '', r.confidence, 'video')
 
     try ReactDOM.unmountComponentAtNode @anchor?
     ReactDOM.render React.createElement(grid_cls, {items: items}),

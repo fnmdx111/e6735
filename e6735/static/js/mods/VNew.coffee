@@ -187,6 +187,7 @@ new_view = React.createClass
         data.append "artist#{id}", artist
 
       data = new FormData()
+      data.append "n", me.state.items.length
       for item, i in me.state.items
         each item, i, data
 

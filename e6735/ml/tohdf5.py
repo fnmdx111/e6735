@@ -1,10 +1,18 @@
 import h5py
 import numpy as np
 from subprocess import call
-caffelocation = "D:\\CG\\caffe-windows\\Build\\x64\\Release\\caffe"
+import os
+
+
+h5path = r'F:\h5fs'
+caffelocation = r"D:\CG\caffe-windows\Build\x64\Release\caffe"
 solverlocation = "D:\\CG\\e6735\\e6735\\ml\\solver.prototxt"
 modellocation = "D:\\CG\\e6735\\e6735\ml\\lenet_train_test.prototxt"
-def h5pyout(features, labels, path):
+
+
+def h5pyout(features, labels):
+    path = h5path
+
     s = np.shape(features)
     nfeatures = np.zeros((s[0], s[2], 1, s[1]))
     for i in range(s[0]):
@@ -23,15 +31,27 @@ def h5pyout(features, labels, path):
         f['label'][i] = labels[i]
     f.close()
 
+
 def clean():
     r = call("del f:\\labelout*", shell=True)
 
+
 def trainFirstTime():
     r = call(caffelocation +" train -solver " + solverlocation, shell=True)
+
+
 def train(modelpath):
-    r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
+    if os.path.exists(modelpath):
+        r = call(caffelocation+" train -solver "+ solverlocation +" -weights " + modelpath, shell=True)
+    else:
+        trainFirstTime()
+        saveModel(modelpath)
+
+
 def saveModel(path):
     r = call("move f:\\lenet_iter_2000.caffemodel " + path, shell=True)
+
+
 def getScore(trainedModelPath, labelShape):
     print(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath)
     r = call(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath,
@@ -41,39 +61,4 @@ def getScore(trainedModelPath, labelShape):
     f.close()
     clean()
     return re
-from e6735.audio import audioAna as au
-a,sr = au.loadAudio("F:\\MUSIC\\DJ OKAWARI - Flower Dance.mp3")
-fbin = au.toFreqBin(a, 10, sr)
-features = []
-fbin = fbin[0:500]
-features.append(fbin)
-a,sr = au.loadAudio("F:\\MUSIC\\DJ OKAWARI - Luv Letter.mp3")
-fbin = au.toFreqBin(a, 10, sr)
-fbin = fbin[0:500]
-features.append(fbin)
-a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - Centuries.mp3")
-fbin = au.toFreqBin(a, 10, sr)
-fbin = fbin[0:500]
-features.append(fbin)
-a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - My Songs Know What You Did In The Dark (Light Em Up).mp3")
-fbin = au.toFreqBin(a, 10, sr)
-fbin = fbin[0:500]
-features.append(fbin)
-labels = []
-labels.append([1, 1, 1, 1, 0, 0, 0, 0])
-labels.append([1, 1, 1, 1, 0, 0, 0, 0])
-labels.append([0, 0,0,0 ,1,1,1,1])
-labels.append([0, 0,0,0 ,1,1,1,1])
-print(np.shape(features))
-h5pyout(features, labels, "F:\\h5fs")
 
-saveModel("f:\\model")
-a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - The Phoenix.mp3")
-fbin = au.toFreqBin(a, 10, sr)
-features = []
-fbin = fbin[0:500]
-features.append(fbin)
-labels = []
-labels.append([0,0,0,0,0,0,0,0])
-h5pyout(features, labels, "F:\\h5fs")
-print(getScore("f:\\model", (8)))
