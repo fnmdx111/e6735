@@ -33,26 +33,47 @@ def train(modelpath):
 def saveModel(path):
     r = call("move f:\\lenet_iter_2000.caffemodel " + path, shell=True)
 def getScore(trainedModelPath, labelShape):
-    r = call(caffelocation + " test -solver " + solverlocation + " -weights " + trainedModelPath,
+    print(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath)
+    r = call(caffelocation + " test -model " + modellocation + " -weights " + trainedModelPath,
              shell=True)
     f = h5py.File("f:\\labelout49", 'r')
     re =  np.reshape(f["data"][0], labelShape)
     f.close()
     clean()
     return re
-# from e6735.audio import audioAna as au
-# a,sr = au.loadAudio("F:\\MUSIC\\Dabin,Bijou - Awakening(Original Mix).mp3")
-# fbin = au.toFreqBin(a, 10, sr)
-# features = []
-# fbin = fbin[0:500]
-# features.append(fbin)
-# a,sr = au.loadAudio("F:\\MUSIC\\Shandy Kubota - Anno.mp3")
-# fbin = au.toFreqBin(a, 10, sr)
-# fbin = fbin[0:500]
-# features.append(fbin)
-# labels = []
-# labels.append([0, 0,0,0 ,1,1,1,1])
-# labels.append([1, 1, 1, 1, 0, 0, 0, 0])
-# print(np.shape(features))
-# h5pyout(features, labels, "F:\\h5fs")
-trainFirstTime()
+from e6735.audio import audioAna as au
+a,sr = au.loadAudio("F:\\MUSIC\\DJ OKAWARI - Flower Dance.mp3")
+fbin = au.toFreqBin(a, 10, sr)
+features = []
+fbin = fbin[0:500]
+features.append(fbin)
+a,sr = au.loadAudio("F:\\MUSIC\\DJ OKAWARI - Luv Letter.mp3")
+fbin = au.toFreqBin(a, 10, sr)
+fbin = fbin[0:500]
+features.append(fbin)
+a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - Centuries.mp3")
+fbin = au.toFreqBin(a, 10, sr)
+fbin = fbin[0:500]
+features.append(fbin)
+a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - My Songs Know What You Did In The Dark (Light Em Up).mp3")
+fbin = au.toFreqBin(a, 10, sr)
+fbin = fbin[0:500]
+features.append(fbin)
+labels = []
+labels.append([1, 1, 1, 1, 0, 0, 0, 0])
+labels.append([1, 1, 1, 1, 0, 0, 0, 0])
+labels.append([0, 0,0,0 ,1,1,1,1])
+labels.append([0, 0,0,0 ,1,1,1,1])
+print(np.shape(features))
+h5pyout(features, labels, "F:\\h5fs")
+
+saveModel("f:\\model")
+a,sr = au.loadAudio("F:\\MUSIC\\Fall Out Boy - The Phoenix.mp3")
+fbin = au.toFreqBin(a, 10, sr)
+features = []
+fbin = fbin[0:500]
+features.append(fbin)
+labels = []
+labels.append([0,0,0,0,0,0,0,0])
+h5pyout(features, labels, "F:\\h5fs")
+print(getScore("f:\\model", (8)))

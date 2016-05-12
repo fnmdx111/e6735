@@ -22,7 +22,7 @@ requires = [
     'pyclust',
     'treelib',
     'pyclust',
-    'h5py'
+    'h5py', 'Cython'
     ]
 
 setup(name='e6735',
