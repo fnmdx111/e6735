@@ -102,8 +102,6 @@ new_view_item = React.createClass
         preview_video = this
 
     else if $$s.type?.match /audio/
-      preview_video?.reset().hide()
-
       a = document.getElementById('audio-preview')
       a?.load()
 
