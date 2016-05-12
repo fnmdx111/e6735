@@ -18,12 +18,14 @@ cls = React.createClass
       muted: true
       preload: "auto"
       controls: true
+      key: $$p.video_id
 
     audio_properties =
       className: 'embed-responsive-item'
       controls: true
       preload: "auto"
       id: $$p.audio_id
+      key: $$p.audio_id
 
     tag = switch
       when $$p.confidence < 0.333 then 'default'
@@ -36,10 +38,10 @@ cls = React.createClass
            E.source {src: $$p.video_fp, type: $$p.video_type},
          E.audio audio_properties,
            E.source {src: $$p.audio_fp, type: $$p.audio_type}]
-      when /video/
+      when 'video'
         E.video video_properties,
           E.source {src: $$p.video_fp, type: $$p.video_type}
-      when /audio/
+      when 'audio'
         E.audio audio_properties,
           E.source {src: $$p.audio_fp, type: $$p.audio_type}
 

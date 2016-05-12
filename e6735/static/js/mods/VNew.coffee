@@ -182,7 +182,7 @@ new_view = React.createClass
 
         data.append "file#{id}", me.state.dzs[item.props.id].files[0]
         data.append "dims#{id}",
-                    ($("#dim-#{item.props.id}-#{id}").val() / 100.0 for id in [1..8])
+                    ($("#dim-#{item.props.id}-#{ii}").val() / 100.0 for ii in [1..8])
         data.append "title#{id}", title
         data.append "artist#{id}", artist
 
