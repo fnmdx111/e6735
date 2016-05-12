@@ -55,6 +55,7 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_static_view('videos', up_config.resources['videos'])
     config.add_static_view('audios', up_config.resources['audios'])
+    config.add_static_view('root', up_config.resources['root'])
 
     config.add_route('home', '/')
     config.add_route('upload', '/upload')

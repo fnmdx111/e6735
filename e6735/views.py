@@ -18,10 +18,12 @@ from e6735.models import Video, Audio
 import logging
 L = logging.getLogger(__name__)
 
+
 def score_dist(s1, s2):
-    ssq = reduce(lambda acc, xs: acc + (xs[0] - xs[1]) ** 2,
+    ssq = reduce(lambda acc, xs: acc + abs(xs[0] - xs[1]),
                  zip(s1, s2), 0)
     return 1 - ssq / 8
+
 
 @view_config(route_name='home', renderer='templates/upload.pt')
 def home(request):
@@ -162,9 +164,10 @@ def search_by_scores(request):
     ret = ret[:20]
 
     return {'result': ret, 'status': 'ok',
-            'resource_path': request.static_url('e6735:resources/'),
+            'resource_path': request.static_url('e6735:resources/root/'),
             'result_type': 'misc',
             'query_type': 'scores'}
+
 
 @view_config(route_name='htgq', renderer='json')
 def heterogeneous_query(request):
@@ -177,7 +180,7 @@ def heterogeneous_query(request):
     tmpf.close()
 
     req_type = 'video' if fn.endswith('mp4') else 'audio'
-    res_type = 'audio' if req_type == 'video' else 'audio'
+    res_type = 'audio' if req_type == 'video' else 'video'
     results = query_similar_multimedia_files(request,
                                              tmpf.name,
                                              req_type, res_type)

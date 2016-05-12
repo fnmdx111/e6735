@@ -23,9 +23,9 @@ query_view = React.createClass
           E.li {role: "presentation", className: ""},
             E.a {href: "#", id: "ahmg"},
               "Homogeneous search"
-          E.li {role: "presentation", className: ""},
-            E.a {href: "#", id: "ascores"},
-              "Search by scores"
+#          E.li {role: "presentation", className: ""},
+#            E.a {href: "#", id: "ascores"},
+#              "Search by scores"
         E.div {className: "tab-content", id: "my-tab-content"},
           E.div {className: "panel panel-body", id: "htg"},
             Uploader {
@@ -83,7 +83,7 @@ query_view = React.createClass
             when 'successful'
               @grid.render data.data, null
         error: =>
-          @grid.hide()
+          @grid?.hide()
           $('.waiting').addClass 'invisible'
       }
 

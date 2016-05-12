@@ -44,5 +44,11 @@ cdef count_bins(np.ndarray[FDTYPE, ndim=2] freq,
                 re[j, 4] += np.abs(D[i, j])
             else:
                 re[j, 5] += np.abs(D[i, j])
-
+    cdef double max = 1.0
+    cdef double norm
+    for i in range(t):
+        norm = np.linalg.norm(re[i])
+        if norm > max:
+            max = norm
+    re = re/max
     return re
